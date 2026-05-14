@@ -73,9 +73,9 @@ a { color: inherit; }
   min-height: 48vh;
   padding: 4.35rem 0 3.9rem;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
-  gap: clamp(1.75rem, 4vw, 4rem);
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  gap: clamp(2rem, 4.5vw, 4.5rem);
+  align-items: center;
   border-top: 1px solid rgba(255,255,255,.04);
 }
 .eyebrow, h2, .post-meta, .note-label, .featured-label {
@@ -107,36 +107,37 @@ h1 {
 }
 .hero-note {
   position: relative;
-  padding: 1rem 1rem 1rem 1.05rem;
+  align-self: center;
+  margin-top: 1.5rem;
+  padding: .15rem 0 .2rem 1.15rem;
   border-left: 2px solid rgba(245, 158, 11, .78);
-  border-top: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(180deg, rgba(255,255,255,.033), rgba(255,255,255,.012));
-  box-shadow: 0 14px 42px rgba(0,0,0,.18);
+  background: transparent;
 }
 .hero-note::before {
-  content: "〰";
+  content: "";
   position: absolute;
-  top: -.9rem;
-  right: .85rem;
-  color: rgba(155, 229, 41, .42);
-  font-size: 1.45rem;
+  top: -.85rem;
+  left: 1.15rem;
+  width: 3.6rem;
+  height: 1px;
+  background: rgba(155, 229, 41, .36);
 }
 .note-label {
-  display: inline-flex;
-  margin: 0 0 .55rem;
-  padding: .18rem .42rem;
+  display: block;
+  margin: 0 0 .7rem;
+  padding: 0;
   color: var(--amber);
-  font-size: .62rem;
-  letter-spacing: .12em;
-  border: 1px solid rgba(245, 158, 11, .28);
-  border-radius: 999px;
-  background: rgba(245, 158, 11, .055);
+  font-size: .64rem;
+  letter-spacing: .135em;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 .hero-note p:last-child {
   margin: 0;
   color: var(--muted);
-  font-size: .97rem;
-  line-height: 1.5;
+  font-size: 1.02rem;
+  line-height: 1.62;
 }
 
 .posts, .about {
