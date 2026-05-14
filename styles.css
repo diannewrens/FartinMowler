@@ -195,14 +195,18 @@ h2 {
 .post-meta span + span {
   color: var(--dim);
 }
-.featured-label {
+.post-card .featured-label {
   display: inline-flex;
-  margin: 0 0 .75rem;
-  padding: .18rem .44rem;
+  margin: 0 0 1.15rem;
+  padding: .24rem .62rem .22rem;
+  width: fit-content;
+  max-width: max-content;
   color: var(--toxic);
-  font-size: .62rem;
-  letter-spacing: .12em;
-  border: 1px solid rgba(155, 229, 41, .25);
+  font-family: var(--sans);
+  font-size: .64rem;
+  line-height: 1;
+  letter-spacing: .13em;
+  border: 1px solid rgba(155, 229, 41, .28);
   border-radius: 999px;
   background: rgba(155, 229, 41, .055);
 }
