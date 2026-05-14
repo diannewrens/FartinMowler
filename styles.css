@@ -1,13 +1,13 @@
 :root {
   --bg: #11100f;
   --panel: #1c1917;
-  --panel-2: #292524;
+  --panel-2: #25211f;
   --text: #fafaf9;
   --muted: #c9c0b8;
   --accent: #f59e0b;
-  --accent-2: #84cc16;
+  --accent-2: #8bdc24;
   --border: #44403c;
-  --max: 980px;
+  --max: 1080px;
 }
 
 * { box-sizing: border-box; }
@@ -15,7 +15,10 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
-  background: radial-gradient(circle at top left, rgba(245, 158, 11, .18), transparent 34rem), var(--bg);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(139, 220, 36, .10), transparent 26rem),
+    radial-gradient(circle at 80% 8%, rgba(245, 158, 11, .10), transparent 30rem),
+    var(--bg);
   color: var(--text);
   line-height: 1.6;
 }
@@ -36,7 +39,7 @@ a { color: inherit; }
   font-weight: 800;
   letter-spacing: .02em;
 }
-.hero { padding: 5rem 0 4rem; }
+.hero { padding: 4.25rem 0 3.25rem; }
 .eyebrow {
   color: var(--accent-2);
   font-family: ui-sans-serif, system-ui, sans-serif;
@@ -46,15 +49,15 @@ a { color: inherit; }
   font-size: .82rem;
 }
 h1 {
-  max-width: 850px;
-  font-size: clamp(3rem, 8vw, 6.5rem);
-  line-height: .9;
-  margin: .25rem 0 1.5rem;
-  letter-spacing: -.06em;
+  max-width: 980px;
+  font-size: clamp(3.2rem, 6.6vw, 5.8rem);
+  line-height: .94;
+  margin: .35rem 0 1.45rem;
+  letter-spacing: -.055em;
 }
 .lede {
-  max-width: 720px;
-  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  max-width: 760px;
+  font-size: clamp(1.08rem, 2.1vw, 1.35rem);
   color: var(--muted);
 }
 .posts, .about {
@@ -70,17 +73,22 @@ h2 {
 }
 .post-card {
   display: block;
-  margin: 1.25rem 0;
-  padding: 1.4rem;
-  background: linear-gradient(135deg, var(--panel), var(--panel-2));
+  margin: 1rem 0;
+  padding: 1.25rem 1.35rem;
+  background: linear-gradient(135deg, rgba(28,25,23,.96), rgba(37,33,31,.96));
   border: 1px solid var(--border);
   border-radius: 18px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.22);
+  box-shadow: 0 14px 34px rgba(0,0,0,.18);
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.post-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 220, 36, .42);
 }
 .post-card h3 {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  line-height: 1.05;
-  margin: .25rem 0 .75rem;
+  font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+  line-height: 1.08;
+  margin: .25rem 0 .7rem;
 }
 .post-card h3 a { text-decoration-thickness: .08em; text-underline-offset: .14em; }
 .post-card p { color: var(--muted); margin: 0; }
