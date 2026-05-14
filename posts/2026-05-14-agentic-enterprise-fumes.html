@@ -4,13 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Agentic Enterprise Fumes — Fartin Mowler</title>
-  <meta name="description" content="A parody architecture essay about agentic AI in the enterprise." />
+  <meta name="description" content="A full parody architecture essay about agentic AI in the enterprise: smells, patterns, traces, governance, and why not every cron job deserves a hat." />
   <link rel="stylesheet" href="../styles.css" />
   <style>
-    article.longform { max-width: 760px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
     article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
-    article.longform p, article.longform li { color: var(--muted); font-size: 1.15rem; }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
     article.longform blockquote { border-left: 4px solid var(--accent); margin: 2rem 0; padding-left: 1rem; color: var(--text); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--text); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
     .back { display: inline-block; margin-top: 2rem; color: var(--accent-2); font-family: ui-sans-serif, system-ui, sans-serif; }
   </style>
 </head>
@@ -23,28 +26,158 @@
     </nav>
   </header>
   <article class="longform">
-    <p class="eyebrow">Pattern draft</p>
+    <p class="eyebrow">Pattern essay</p>
     <h1>Agentic Enterprise Fumes</h1>
-    <p class="lede">We have reached the familiar phase of a new software movement where every vendor deck contains the same three boxes: a model, a tool, and an arrow labeled “reasoning.”</p>
 
-    <p>There is something real here. Giving software systems a controlled way to perceive context, choose tools, and iterate toward an outcome is a meaningful shift. It changes how we design boundaries. It changes how we test. It absolutely changes how we assign blame when the quarterly forecast deck contains a recipe for soup.</p>
+    <p>Every enterprise architecture group eventually receives the same deck. It contains a model, a tool, a rectangle labelled "memory", and an arrow labelled "reasoning". The slide is usually titled "Agentic Platform". Nobody mentions that the first production use case is checking whether a spreadsheet has arrived in a shared mailbox.</p>
 
-    <blockquote>Not every agent is an architecture. Sometimes it is a cron job wearing a little hat.</blockquote>
+    <blockquote>
+      <p>Not every agent is an architecture. Sometimes it is a cron job wearing a little hat.</p>
+    </blockquote>
 
-    <p>The useful question is not “Should we use agents?” The useful question is “Where does autonomy create leverage, and where does it merely move uncertainty into a more expensive runtime?”</p>
+    <p>This is not an argument against agents. Useful systems observe a situation, choose a bounded course of action, use tools, ask for help when they should, and leave behind a record that can be understood later. They can reduce queue times, triage dull work, and keep humans away from forms whose designers should be made to apologize in person.</p>
 
-    <h2>Early smells</h2>
+    <p>The problem is that the word "agent" has escaped containment. It now covers a chat prompt with a database handle, a batch job with better manners, a workflow engine with amnesia, and occasionally a real decision loop. The smell is ambiguity with a procurement budget.</p>
+
+    <h2>What I mean by an enterprise agent</h2>
+
+    <p>An enterprise agent is software that can decide between actions at runtime, usually by calling a language model, and then execute some actions through internal tools. It has more discretion than a rules engine and less authority than the person whose job title appears in the risk register after it misbehaves.</p>
+
+    <p>That definition matters because many useful automations are not agents. A scheduled reconciliation job is not an agent. A deterministic workflow that sends an invoice for approval is not an agent. A search box that summarizes policy text is not an agent.</p>
+
+    <p>The boundary is discretion. If the system can choose which tool to use, when to stop, whether to ask for clarification, or how to interpret a policy exception, you have introduced an agentic seam. That seam needs design. It also needs someone willing to say, in a meeting, "This is where the machine is allowed to be surprising." The room will become quiet. This is a good sign.</p>
+
+    <h2>Smell: PowerPoint autonomy</h2>
+
+    <p>PowerPoint autonomy appears when the agent is autonomous in diagrams and supervised in every environment where failure has consequences. The architecture shows independent planning, tool use, and continuous learning. The implementation posts a draft message to Slack and waits for Deborah from Operations to click "approve" before anything happens.</p>
+
+    <p>Symptoms include demos that always start from a clean prompt, tool catalogs with no failure modes, and a road map that moves from "human in the loop" to "human on the loop" to "human informed after the loop" without naming what changed besides the preposition. The agent has a logo before it has an incident procedure.</p>
+
+    <p>The remedy is to write the autonomy contract before choosing the orchestration product. The contract should say what the agent may observe, what it may decide, what it may change, when it must stop, and who owns the result. This is not a legal document, although lawyers may enjoy ruining it later. It is an architectural boundary.</p>
+
     <ul>
-      <li><strong>Prompt soup:</strong> business logic hidden in a blob of prose nobody reviews.</li>
-      <li><strong>Tool confetti:</strong> exposing every internal API because the demo looked magical.</li>
-      <li><strong>Optimistic memory:</strong> storing everything forever, then acting surprised when the agent remembers nonsense with confidence.</li>
-      <li><strong>Accountability vapor:</strong> no durable trace of why the system did what it did.</li>
+      <li>Allowed observations: customer status, ticket history, inventory level, policy version.</li>
+      <li>Allowed decisions: classify, draft, recommend, route, escalate, reject with reason.</li>
+      <li>Allowed actions: create a draft, update a low risk field, open a task, notify a queue.</li>
+      <li>Hard stops: money movement, access grants, customer commitments, policy exceptions.</li>
+      <li>Evidence required: prompt, retrieved context, tool calls, model version, human approvals.</li>
     </ul>
 
-    <h2>A better starting pattern</h2>
-    <p>Treat the agent as an orchestration boundary, not a wizard. Give it narrow tools, explicit state, observable runs, and boring rollback paths. The more magical the interface feels, the more mundane the operating model must be.</p>
+    <p>The tradeoff is slower adoption. The benefit is that everyone discovers, early, whether they wanted an agent or a more expensive button.</p>
 
-    <p>In other words: enjoy the paradigm shift, but open a window.</p>
+    <h2>Pattern: Bounded delegation</h2>
+
+    <p>Bounded delegation is the pattern I look for first. Give the agent a narrow job with a measurable exit condition and a small set of tools. The agent should know what finished means. "Improve customer onboarding" is not a task. "For each new corporate account, compare submitted documents against the current checklist, draft missing item requests, and send exceptions to the onboarding queue" is closer.</p>
+
+    <p>A bounded agent has a work packet, a policy source, a tool list, and a return envelope. The work packet contains the case. The policy source says what good looks like. The tool list says what the agent may touch. The return envelope contains the output, confidence, reasons, and audit trace. If any of those are missing, the agent will improvise. Enterprises often call this "emergent behavior" until it happens to their data.</p>
+
+    <p>The tradeoff is that bounded agents are less theatrical. They do not look like a digital employee. They look like a piece of software with judgment in one place. This is exactly why they are deployable.</p>
+
+    <h2>Smell: The tool buffet</h2>
+
+    <p>The tool buffet occurs when an agent is given every API the organization can expose because tool use looks impressive in demos. The agent can search documents, update tickets, query the warehouse, send email, modify CRM records, trigger builds, and, in one memorable case, change sales territories. It is given these powers before anyone knows which of them are necessary.</p>
+
+    <p>Symptoms are easy to spot. Tool descriptions read like marketing copy. Authentication is broad because fine grained scopes are inconvenient. The agent chooses tools by semantic vibes. A harmless request, such as "prepare the renewal summary", causes six downstream systems to receive enthusiastic but unnecessary attention. Logs show the digital equivalent of a raccoon in a pantry.</p>
+
+    <p>The cause is a misunderstanding of agency. An agent is not better because it has more possible actions. It is better when it has the right actions and enough context to know when not to use them. Tool abundance expands the blast radius and complicates testing.</p>
+
+    <p>The remedy is capability budgeting. Start with read only tools. Add write tools one at a time. For each tool, define purpose, preconditions, postconditions, idempotency, and rollback. Use separate tool identities for agents rather than borrowed human credentials. Deny by default. If that sounds obvious, ask your identity team how many service accounts currently have names like temp-ai-test-final2.</p>
+
+    <h2>Pattern: Action quarantine</h2>
+
+    <p>Action quarantine puts a reviewable buffer between agent intent and external side effects. The agent may prepare an action, but another component decides whether the action executes. That component can be deterministic, human, or both.</p>
+
+    <p>Good quarantine is structured. The agent emits an action proposal: action type, target, parameters, reason, evidence, risk class, and expiry. A policy gate checks the proposal. Low risk proposals may pass automatically. Medium risk proposals may require sampled review. High risk proposals require explicit approval or are not allowed at all.</p>
+
+    <p>Quarantine adds latency and can reduce the apparent magic of the system. It also creates a place to measure quality before the agent rearranges the furniture. Over time, proposals with stable quality can move to automatic execution. Proposals with unstable quality stay contained. The architecture learns without pretending the model learned.</p>
+
+    <h2>Smell: Prompt mortgage</h2>
+
+    <p>A prompt mortgage is long term debt disguised as a clever instruction. The team starts with a crisp prompt. Then a customer complains, so the team adds a sentence. Legal asks for a disclaimer, so the team adds a paragraph. Sales wants friendlier tone. Compliance wants stricter tone. A regional office needs an exception. Soon the prompt is a Victorian plumbing diagram.</p>
+
+    <p>Symptoms include comments like "do not remove this line", duplicated policies expressed in prose, tests that compare whole paragraphs, and production fixes made by adding "IMPORTANT" in capital letters. The prompt is now both source code and seance. Nobody knows which clause prevents which failure, but everyone is afraid to touch it.</p>
+
+    <p>The cause is treating the model as the policy engine. Language is a convenient interface for ambiguity, so teams pour rules into it. Some rules belong there, especially task framing and response format. Many do not. Eligibility rules, jurisdictional exceptions, approval thresholds, and customer entitlements should usually live in ordinary software, where they can be versioned, tested, and explained without reading tea leaves.</p>
+
+    <p>The remedy is prompt refactoring. Separate role instructions, task instructions, output schema, policy references, and examples. Move stable business rules out of the prompt. Retrieve policy text rather than copying it. Keep examples small and named. When a prompt line fixes a bug, add a regression case that proves it. If you cannot test the line, it is folklore, and folklore should not approve refunds.</p>
+
+    <h2>Pattern: Memory as a ledger, not a diary</h2>
+
+    <p>Enterprise agents are often sold with memory. This sounds comforting until the agent remembers the wrong thing. A diary memory stores conversational residue: preferences, guesses, fragments, tone notes, half corrected facts. A ledger memory stores durable, typed events: case opened, document received, risk score changed, human approved, email sent.</p>
+
+    <p>Use ledger memory for enterprise work. The agent may summarize, but the system should preserve the underlying events. The summary is a convenience. The ledger is the record. When the agent says, "The customer has already provided the tax certificate," the next question should be "Which event proves that?" not "Do we trust the little ghost in the context window?"</p>
+
+    <p>The tradeoff is effort. Ledger memory requires schemas, retention rules, privacy review, and migration. Diary memory requires optimism. Optimism is cheaper in the first quarter and more expensive during discovery.</p>
+
+    <h2>Smell: Evaluation theatre</h2>
+
+    <p>Evaluation theatre is the practice of proving an agent works by showing that it succeeded on examples chosen after the demo was scheduled. The test set contains clean cases, current policies, and names that tokenize pleasantly. The agent receives full marks for producing plausible prose. Nobody checks whether the downstream action was correct because the downstream action was commented out for safety.</p>
+
+    <p>Symptoms include dashboards with average confidence but no calibration, leaderboards comparing models on tasks nobody performs, and test cases written by the same people who wrote the prompt. The evaluation report says the agent achieved 92 percent accuracy. The footnote explains that accuracy means "preferred by reviewer" and the reviewer was the product manager who has a launch date.</p>
+
+    <p>The remedy is an evaluation pyramid. At the bottom, test deterministic components: policy functions, tool schemas, parsers, permission checks. In the middle, run scenario tests with fixed inputs and expected action proposals. At the top, run adversarial and sampled production review. Measure task success, unsafe action rate, unnecessary escalation, missed escalation, latency, cost, and human correction rate. Keep a graveyard of failures. Graveyards are underrated architecture documents.</p>
+
+    <h2>Pattern: The four traces</h2>
+
+    <p>An agent that affects enterprise work should leave four traces.</p>
+
+    <ul>
+      <li>The reasoning trace records the concise rationale offered for the decision. It need not expose private chain of thought. It must explain enough for review.</li>
+      <li>The evidence trace records retrieved documents, database rows, user inputs, and policy versions used.</li>
+      <li>The action trace records tool calls, parameters, results, retries, and external identifiers.</li>
+      <li>The governance trace records model version, prompt version, approvals, overrides, and risk classification.</li>
+    </ul>
+
+    <p>Without these traces, incident review becomes archaeology. With them, the agent becomes boring enough to operate. Boring is a compliment. Boring systems get renewed contracts.</p>
+
+    <h2>Smell: The synthetic manager</h2>
+
+    <p>The synthetic manager smell appears when an organization uses agents to compensate for unclear ownership. The agent routes work because teams cannot agree on queues. It writes status because nobody trusts the project tracker. It summarizes meetings because meetings contain no decisions. It follows up because accountability has been converted into calendar invites.</p>
+
+    <p>These agents may help, but they may also preserve the dysfunction by making it less painful. If a system needs an agent to discover who owns a customer complaint, the problem is ownership, not reasoning.</p>
+
+    <p>The remedy is to ask what organizational fact the agent is inferring. If the fact should be explicit, make it explicit. Put ownership in the case record, service levels in the workflow, and decision rights in policy. Use the agent for interpretation at the edges, not for divination at the center.</p>
+
+    <h2>Adoption sequence</h2>
+
+    <p>I prefer an adoption sequence that starts disappointingly small.</p>
+
+    <ul>
+      <li>Begin with advisory agents that read, classify, and draft but do not write back to systems of record.</li>
+      <li>Add action proposals with quarantine and structured approval.</li>
+      <li>Automate low risk actions after production review shows stable quality.</li>
+      <li>Expand tool access only when a missing tool causes measurable human work.</li>
+      <li>Retire the agent when the process becomes deterministic enough for ordinary code.</li>
+    </ul>
+
+    <p>The last step is often skipped. A successful agent may reveal rules that cheaper deterministic software can then replace. This is not failure. It is digestion.</p>
+
+    <h2>The enterprise agent checklist</h2>
+
+    <p>Before an agent moves from experiment to production, I want short answers to these questions.</p>
+
+    <ul>
+      <li>What work packet does the agent receive, and who creates it?</li>
+      <li>Which decisions may it make without human approval?</li>
+      <li>Which tools may it call, with which permissions, and under which identity?</li>
+      <li>What evidence must it cite for each decision?</li>
+      <li>What are the hard stops?</li>
+      <li>How are prompts, policies, examples, and models versioned?</li>
+      <li>How do we replay a run from six months ago?</li>
+      <li>What metrics would cause rollback?</li>
+      <li>Who receives the alert when the agent is confident and wrong?</li>
+      <li>Which part of this should become ordinary software if it stabilizes?</li>
+    </ul>
+
+    <p>These questions are not hostile to agents. They are hostile to fumes. The distinction is useful. Fumes make people light headed and optimistic. Architecture makes people slightly annoyed and safer.</p>
+
+    <h2>Closing the window</h2>
+
+    <p>Agentic AI will enter enterprises the way most technology enters enterprises: first as a pilot, then as a platform, then as a governance problem, then as a line item nobody can fully explain but everyone is afraid to remove. Some of it will be waste. Some of it will be genuinely useful. The useful parts will look less like artificial colleagues and more like bounded decision components with careful tool access, good traces, and enough humility to stop.</p>
+
+    <p>The best agent designs I have seen do not worship autonomy. They ration it. They put discretion where it earns its keep and remove it where ordinary code is clearer. They treat prompts as code, tools as liabilities, memory as evidence, and evaluation as an operating practice rather than a launch ritual.</p>
+
+    <p>If this sounds less exciting than the deck, good. The deck is full of arrows labelled "reasoning". Production is full of partial failures, stale policies, odd customers, missing fields, and Deborah from Operations, who knows the process better than the model and has been right about the exception queue since March. Build for her. Give the cron job a hat only if the hat has a job.</p>
 
     <a class="back" href="../">← Back to the front page</a>
   </article>
