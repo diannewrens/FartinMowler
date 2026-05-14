@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agentic Enterprise Fumes — Fartin Mowler</title>
+  <meta name="description" content="A parody architecture essay about agentic AI in the enterprise." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 760px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.15rem; }
+    article.longform blockquote { border-left: 4px solid var(--accent); margin: 2rem 0; padding-left: 1rem; color: var(--text); font-size: 1.35rem; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--accent-2); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern draft</p>
+    <h1>Agentic Enterprise Fumes</h1>
+    <p class="lede">We have reached the familiar phase of a new software movement where every vendor deck contains the same three boxes: a model, a tool, and an arrow labeled “reasoning.”</p>
+
+    <p>There is something real here. Giving software systems a controlled way to perceive context, choose tools, and iterate toward an outcome is a meaningful shift. It changes how we design boundaries. It changes how we test. It absolutely changes how we assign blame when the quarterly forecast deck contains a recipe for soup.</p>
+
+    <blockquote>Not every agent is an architecture. Sometimes it is a cron job wearing a little hat.</blockquote>
+
+    <p>The useful question is not “Should we use agents?” The useful question is “Where does autonomy create leverage, and where does it merely move uncertainty into a more expensive runtime?”</p>
+
+    <h2>Early smells</h2>
+    <ul>
+      <li><strong>Prompt soup:</strong> business logic hidden in a blob of prose nobody reviews.</li>
+      <li><strong>Tool confetti:</strong> exposing every internal API because the demo looked magical.</li>
+      <li><strong>Optimistic memory:</strong> storing everything forever, then acting surprised when the agent remembers nonsense with confidence.</li>
+      <li><strong>Accountability vapor:</strong> no durable trace of why the system did what it did.</li>
+    </ul>
+
+    <h2>A better starting pattern</h2>
+    <p>Treat the agent as an orchestration boundary, not a wizard. Give it narrow tools, explicit state, observable runs, and boring rollback paths. The more magical the interface feels, the more mundane the operating model must be.</p>
+
+    <p>In other words: enjoy the paradigm shift, but open a window.</p>
+
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
