@@ -3,58 +3,94 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fartin Mowler — Notes on AI, software, and other regrettable abstractions</title>
+  <title>Fartin Mowler — AI architecture field notes</title>
   <meta name="description" content="A suspiciously familiar software-thinker persona blogging about AI patterns, practices, and architectural smells." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="site-header">
-    <nav class="nav">
-      <a class="brand" href="./">Fartin Mowler</a>
-      <a href="#posts">Posts</a>
+    <nav class="nav" aria-label="Primary">
+      <a class="brand" href="./" aria-label="Fartin Mowler home">
+        <span class="brand-mark">FM</span>
+        <span>Fartin Mowler</span>
+      </a>
+      <a href="#posts">Field notes</a>
       <a href="#about">About</a>
     </nav>
+
     <section class="hero">
-      <p class="eyebrow">Enterprise AI, but with ventilation</p>
-      <h1>Notes on AI, software, and other regrettable abstractions.</h1>
-      <p class="lede">A parody architecture blog for the new agentic age: patterns, anti-patterns, prompts that became platforms, and the occasional suspicious smell in the abstraction layer.</p>
+      <div class="hero-copy">
+        <p class="eyebrow">AI architecture field notes · est. 2026</p>
+        <h1>Useful patterns, regrettable abstractions.</h1>
+        <p class="lede">A dry little architecture blog about agents, prompts, RAG, MCP, vibe coding, and the warm smell that appears when a demo becomes a platform.</p>
+      </div>
+      <aside class="hero-note" aria-label="Editorial note">
+        <p class="note-label">Operating principle</p>
+        <p>Enjoy the paradigm shift. Open a window. Write down the boundary before the boundary writes production code.</p>
+      </aside>
     </section>
   </header>
 
   <main>
     <section id="posts" class="posts">
-      <h2>Recent writings</h2>
-      <article class="post-card">
-        <p class="date">May 14, 2026</p>
+      <div class="section-heading">
+        <h2>Field notes</h2>
+        <p>Skimmable first. Rabbit hole optional.</p>
+      </div>
+
+      <article class="post-card featured">
+        <div class="post-meta">
+          <span>May 14, 2026</span>
+          <span>Pattern essay</span>
+        </div>
         <h3><a href="posts/2026-05-14-agentic-enterprise-fumes.html">Agentic Enterprise Fumes</a></h3>
-        <p>A full pattern essay on enterprise agents: PowerPoint autonomy, tool buffets, prompt mortgages, action quarantine, ledger memory, evaluation theatre, and why not every cron job deserves a hat.</p>
+        <p>A pattern essay on enterprise agents: PowerPoint autonomy, tool buffets, action quarantine, ledger memory, evaluation theatre, and why not every cron job deserves a hat.</p>
       </article>
-      <article class="post-card">
-        <p class="date">April 13, 2026</p>
-        <h3><a href="posts/2026-04-13-rag-and-the-smell-of-stale-context.html">RAG and the Smell of Stale Context</a></h3>
-        <p>Retrieval does not make text true. A practical essay on stale indexes, chunking, metadata, citations, abstention, and why the model is not your librarian.</p>
-      </article>
-      <article class="post-card">
-        <p class="date">March 16, 2026</p>
-        <h3><a href="posts/2026-03-16-model-context-protocol-catalog.html">The Model Context Protocol Catalog</a></h3>
-        <p>A catalog of MCP-style patterns and smells: tool pantries, resource boundaries, local servers, remote fog machines, dull auth, and audit trails that do not require archaeology.</p>
-      </article>
-      <article class="post-card">
-        <p class="date">February 9, 2026</p>
-        <h3><a href="posts/2026-02-09-prompt-oriented-architecture.html">Prompt-Oriented Architecture</a></h3>
-        <p>Prompts are production dependencies, not comments. Version them, test them, extract policy from poetry, and stop shipping haunted paragraphs into revenue paths.</p>
-      </article>
-      <article class="post-card">
-        <p class="date">January 12, 2026</p>
-        <h3><a href="posts/2026-01-12-vibe-coding-and-the-architecture-hangover.html">Vibe Coding and the Architecture Hangover</a></h3>
-        <p>AI-assisted coding is useful enough to be dangerous. A field note on prototypes, generated code debt, tests, ownership, and the files that were born yesterday but plan to retire here.</p>
-      </article>
+
+      <div class="archive-grid">
+        <article class="post-card">
+          <div class="post-meta">
+            <span>April 13, 2026</span>
+            <span>RAG</span>
+          </div>
+          <h3><a href="posts/2026-04-13-rag-and-the-smell-of-stale-context.html">RAG and the Smell of Stale Context</a></h3>
+          <p>Retrieval does not make text true. Stale indexes, chunking, metadata, citations, abstention, and why the model is not your librarian.</p>
+        </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span>March 16, 2026</span>
+            <span>MCP</span>
+          </div>
+          <h3><a href="posts/2026-03-16-model-context-protocol-catalog.html">The Model Context Protocol Catalog</a></h3>
+          <p>Tool pantries, resource boundaries, local servers, remote fog machines, dull auth, and audit trails that do not require archaeology.</p>
+        </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span>February 9, 2026</span>
+            <span>Prompts</span>
+          </div>
+          <h3><a href="posts/2026-02-09-prompt-oriented-architecture.html">Prompt-Oriented Architecture</a></h3>
+          <p>Prompts are production dependencies, not comments. Version them, test them, extract policy from poetry, and stop shipping haunted paragraphs.</p>
+        </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span>January 12, 2026</span>
+            <span>Field note</span>
+          </div>
+          <h3><a href="posts/2026-01-12-vibe-coding-and-the-architecture-hangover.html">Vibe Coding and the Architecture Hangover</a></h3>
+          <p>AI-assisted coding is useful enough to be dangerous. Prototypes, generated code debt, tests, ownership, and suspiciously immortal helper files.</p>
+        </article>
+      </div>
     </section>
 
     <section id="about" class="about">
-      <h2>About the persona</h2>
-      <p><strong>Fartin Mowler</strong> is a parody software architecture commentator for the AI era. The bit: if every paradigm shift needs a sober thought leader explaining its patterns, AI deserves one who admits the room smells weird.</p>
-      <p>This is satire, not impersonation. Any resemblance to respected software authors with better names and fewer digestive metaphors is part of the joke.</p>
+      <div>
+        <h2>About the persona</h2>
+      </div>
+      <div class="about-copy">
+        <p><strong>Fartin Mowler</strong> is a parody software architecture commentator for the AI era. If every paradigm shift needs a sober pattern language, AI deserves one willing to admit the room smells weird.</p>
+        <p>This is satire, not impersonation. Any resemblance to respected software authors with better names and fewer digestive metaphors is part of the joke.</p>
+      </div>
     </section>
   </main>
 
