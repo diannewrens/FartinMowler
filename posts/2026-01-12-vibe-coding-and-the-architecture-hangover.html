@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vibe Coding and the Architecture Hangover — Fartin Mowler</title>
+  <meta name="description" content="A field note on AI-assisted coding, prototypes, ownership, tests, and generated code debt." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--accent); margin: 2rem 0; padding-left: 1rem; color: var(--text); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--text); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--accent-2); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Field note</p>
+    <h1>Vibe Coding and the Architecture Hangover</h1>
+    <p>January 2026. The industry has discovered that if you give a programmer a confident autocomplete, a cheap model budget, and a deadline with teeth, you can produce an application before lunch and an archaeology site by Friday.</p>
+    <p>We used to call this prototyping. Then rapid application development. Then low-code, then no-code. Now the fashionable term is vibe coding, which is what happens when the developer stops typing a program and starts conducting a seance over one. The prompt says, "make auth work," and a minute later there is auth, in the same way that a damp basement has mushrooms. Something grew. Whether it belongs in the house is a separate matter.</p>
+    <p>I am not here to sneer at it. Sneering is cheap, and these tools are not toys. AI-assisted coding is useful enough to be dangerous, which is the interesting category. It can turn a vague idea into a working demo fast. It can fill in tedious plumbing. It can explain a library you have avoided for three years because the documentation reads like it was translated from YAML into grief. It can also scatter little architectural compromises through a codebase until the next maintainer opens the repository and smells the warm, unmistakable odor of yesterday's certainty.</p>
+    <h2>The sober value of writing with a machine</h2>
+    <p>For prototypes, this is excellent. A prototype is allowed to lie, as long as everyone knows which lies it is telling. Fake latency. Fake permissions. Fake data. Fake billing. The problem begins when the fake parts get promoted without a ceremony. Production code is not prototype code with a nicer deployment target. It needs observability, failure modes, ownership, rollback paths, migration discipline, boring names, and tests that complain before customers do.</p>
+    <p>AI assistants are also good at tasks where the shape is already known. Write a parser for this small format. Generate table-driven tests from these examples. Convert this callback API into async calls. Draft the first version of a Terraform module. Explain why this regex has chosen violence. None of that requires the machine to invent the architecture. It requires it to produce candidate text inside a boundary the human understands.</p>
+    <blockquote><p>The unit of risk is not generated code. The unit of risk is unowned code.</p></blockquote>
+    <h2>Generated code has no childhood</h2>
+    <p>Handwritten code usually has a history, even if it is a bad one. Someone remembers the argument in the pull request. Someone knows why the service has two queues. Someone can point at a migration and say, "Do not touch that until after quarter close." Generated code often arrives as an adult orphan. It has opinions but no biography.</p>
+    <p>Code is not just instructions for a machine. It is also a record of decisions. The names, seams, abstractions, and exceptions tell future programmers what the previous programmers thought mattered. AI-generated code can imitate that surface, but it does not know which decisions were hard-won and which were accidental. It may create a service class because that is what service classes do in the wet average of the internet. It may add retries because retries sound responsible. It may catch exceptions because stack traces are untidy. You get patterns without reasons.</p>
+    <h2>Architecture erosion is a local event</h2>
+    <p>Architecture rarely collapses because someone voted to destroy it. It erodes through local patches that are individually reasonable. One endpoint bypasses the domain layer to ship a customer fix. One generated component talks directly to storage because the prompt did not mention the repository pattern. One test suite mocks the database so completely that the database becomes a rumor. Six months later the team holds an architecture review and discovers the system has been remodeled by raccoons.</p>
+    <p>The old architecture smells still apply, but they acquire new perfumes. There is generated duplication, where two pieces of code solve the same problem with slightly different parameter names because the prompts were issued on different Tuesdays. There is context laundering, where a model restates a bad pattern from the repository with such confidence that it becomes policy. There is abstraction inflation, where every small operation receives a manager, coordinator, strategy, and provider because the training set has apparently never met a function it did not want to promote.</p>
+    <h2>Code review after the vibes</h2>
+    <p>Reviewing AI-assisted code as if it were ordinary human code misses the failure mode. Human code often reveals uncertainty through clumsiness. Generated code often reveals uncertainty through polish. It can be wrong in a way that looks domesticated.</p>
+    <ul>
+      <li>Separate mechanical changes from semantic changes. Do not mix a generated refactor with new behavior unless you enjoy audit trails that look like compost.</li>
+      <li>Require tests that would fail for the obvious wrong implementation, not just tests that bless the generated one.</li>
+      <li>Ask the author to delete code. If they cannot find anything unnecessary in a model's first draft, they have not reviewed it yet.</li>
+      <li>Check boundaries explicitly: auth, persistence, error handling, time, money, idempotency, and user-visible contracts.</li>
+      <li>Prefer small prompts and small commits. The assistant can sprint, but the repository should still walk through the door.</li>
+    </ul>
+    <h2>Tests are the designated driver</h2>
+    <p>The dangerous loop is prompt, accept, run app, observe happy path, ship. It feels empirical because something ran. It is closer to smelling the milk and declaring the dairy industry sound. The happy path proves that one path was happy once. Architecture needs stronger evidence.</p>
+    <p>For AI-assisted work, tests should be written around invariants before the assistant is asked to fill in the implementation. If the model writes both the code and the tests from the same vague prompt, it will often produce a tiny courtroom where it plays judge, jury, and expert witness. The tests will assert the behavior the implementation already has. Everyone is very impressed, especially the defendant.</p>
+    <h2>Where it belongs</h2>
+    <p>Exploration is the natural home. When the team does not yet know whether an idea is worth building, speed matters. Use the machine. Generate the ugly integration. Mock the hard part. Put the demo in front of someone who can say no.</p>
+    <p>Internal tooling is another good fit, with a warning label. Many companies have a swamp of scripts, dashboards, one-off admin pages, and glue jobs that never get built because the official roadmap has nicer shoes. AI can help there. But "internal" is not a synonym for "risk-free." An internal refund tool can still lose money. A permissions dashboard can still expose data. A migration script can still turn a database into soup with indexes.</p>
+    <h2>Where it should make you nervous</h2>
+    <p>Be careful when the work crosses trust boundaries. Authentication, authorization, billing, privacy, crypto, audit trails, medical decisions, legal records, financial reconciliation, and deletion flows do not become casual just because the assistant can type OAuth faster than you can.</p>
+    <p>Be careful when nobody on the team can evaluate the output. A frontend developer asks for Kubernetes. A backend developer asks for a cryptographic protocol. A founder asks for "SOC 2 compliant auth" and receives a folder named compliance. The assistant has now expanded the system into a region where the team cannot smell smoke.</p>
+    <h2>The ownership protocol</h2>
+    <p>Teams need a small protocol, not a moral panic. Ban nothing by default. Require ownership by default. The person who submits the code is the author, even if the first draft came from a model. They must understand it, test it, maintain it, and explain why it fits the architecture.</p>
+    <ul>
+      <li>Mark substantial AI assistance in the pull request description. One sentence is enough.</li>
+      <li>Require human-written acceptance criteria before generating major features.</li>
+      <li>For architectural changes, write the design first and generate implementation second.</li>
+      <li>For borrowed snippets, check licenses and provenance. A model is not a laundering service for Stack Overflow muscle memory.</li>
+      <li>Schedule deletion work. Generated prototypes should have an expiration date, or they will buy furniture.</li>
+    </ul>
+    <h2>After the hangover</h2>
+    <p>The sensible future is not hand-coding purity. Nobody serious wants to return to chiseling CRUD endpoints out of granite. The sensible future is assisted engineering with clear authorship. Models draft. Humans decide. Tests arbitrate. Architecture records the decisions that should outlive the chat window.</p>
+    <p>Used well, vibe coding lowers the cost of trying things. That is good. Software has too many ceremonies that protect bad ideas from early contact with reality. Used poorly, it lowers the cost of adding unexamined structure. That is also powerful, in the way a leaf blower is powerful when aimed at a desk full of receipts.</p>
+    <p>Somewhere in the repository, a file named helper.ts is already waiting. It compiles. It has no tests. It knows three things about your business that are almost true. It was born yesterday and will outlive the VP who asked for the demo. Open a window.</p>
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>

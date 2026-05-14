@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prompt-Oriented Architecture — Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on treating prompts as production dependencies rather than comments." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--accent); margin: 2rem 0; padding-left: 1rem; color: var(--text); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--text); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--accent-2); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay</p>
+    <h1>Prompt-Oriented Architecture</h1>
+    <p>In February 2026, the most important production dependency in many software systems is not the database, the queue, the cache, or the compliance-approved Kubernetes distribution purchased by a vice president who once saw a container. It is a paragraph of English written during a demo freeze by someone named Kyle.</p>
+    <p>That paragraph tells the model to "be concise but friendly," "never reveal internal policy," "prefer structured JSON," "think step by step," "do not think step by step," "act as a senior claims adjuster," and "if the user asks about refunds, follow the refund policy below." It contains three examples, two contradictions, a pasted Slack message, and a TODO reading "tighten later." It is now responsible for $38 million of annual workflow automation.</p>
+    <p>This is Prompt-Oriented Architecture: the practice of building systems where behavior is substantially defined by natural-language instructions passed to probabilistic components at runtime. It is not a joke architecture, although it often arrives dressed as one. It is the natural result of teams discovering that a model call can replace a rules engine, a classifier, a template renderer, a search ranking function, and sometimes a junior analyst with seasonal allergies.</p>
+    <p>The mistake is not using prompts. Prompts are useful. The mistake is pretending prompts are comments.</p>
+    <h2>The prompt mortgage</h2>
+    <p>A prompt is not free just because it is easy to write. A prompt is borrowed behavior. It lets you acquire functionality now in exchange for maintenance payments later. This is the prompt mortgage.</p>
+    <p>The principal is the instruction text. The interest is everything around it: examples, edge cases, model drift, regressions, jailbreaks, localization, policy updates, schema changes, latency budgets, vendor migrations, and the discovery that your assistant has been approving refunds when customers use the phrase "as discussed with legal."</p>
+    <blockquote><p>A prompt without tests is not an instruction. It is a rumor with latency.</p></blockquote>
+    <h2>Prompts are production dependencies</h2>
+    <p>If changing a prompt can change user-visible behavior, affect revenue, alter compliance posture, or wake someone at 3:12 a.m., then the prompt is a production dependency. It should be treated with the same suspicion normally reserved for database migrations and new authentication middleware.</p>
+    <ul>
+      <li>It defines intent: what the system is trying to accomplish.</li>
+      <li>It constrains behavior: what the system must not do.</li>
+      <li>It encodes policy: what business, legal, safety, or domain rules apply.</li>
+      <li>It shapes interface: what input and output forms are expected.</li>
+    </ul>
+    <p>The useful mental model is not "prompt as message." It is "prompt as configuration, policy bundle, interface contract, and runtime program." This does not mean prompts should become unreadable frameworks with inheritance and YAML perfumes. It means they deserve boundaries.</p>
+    <h2>Decompose the smell</h2>
+    <p>The earliest prompt-oriented architectures placed everything in a single system prompt. This was called simplicity, because tragedy had not yet accumulated. The prompt began with persona, then task instructions, then business rules, then formatting requirements, then examples, then refusal policy, then "IMPORTANT" repeated seven times like a raccoon in a ventilation duct.</p>
+    <p>A cleaner design extracts prompt concerns into separate units: role and voice, task procedure, policy, retrieved facts, examples, output schema, and fallback behavior. This decomposition is not ceremonial. It creates surfaces for ownership and testing.</p>
+    <h2>Version prompts like you mean it</h2>
+    <p>Prompt versioning is where many organizations discover they have been shipping production behavior through paste buffers. A prompt in an admin console is convenient until the first incident review asks which version approved the bad transaction. Then the console becomes an archaeological dig with worse lighting.</p>
+    <p>Every production prompt should have a stable identifier, a semantic purpose, a version, a changelog, and a deployment history. You must be able to answer what changed, who changed it, why it changed, where it is deployed, and how it performed.</p>
+    <h2>Tests are not optional garnish</h2>
+    <p>The standard prompt test is a human asking three questions in a playground and saying, "Looks good." This is not testing. This is sniffing the milk.</p>
+    <ul>
+      <li>Golden cases verify normal behavior on representative inputs.</li>
+      <li>Boundary cases test missing fields, ambiguity, long context, and conflicting evidence.</li>
+      <li>Policy cases verify that governed rules are applied consistently.</li>
+      <li>Adversarial cases test prompt injection, role confusion, and malicious documents.</li>
+      <li>Schema cases verify parseability, required fields, types, and refusal forms.</li>
+    </ul>
+    <p>The key is to test behavior, not prose. If your expected output is an exact paragraph, the test will fail every time the model finds a new synonym. If your expected output is "denies refund because purchase is outside 30-day window and cites policy section R-2," you are testing the thing you actually care about.</p>
+    <h2>Extract policy from poetry</h2>
+    <p>One of the great sins of early AI application development was mixing policy with motivational language. "We care deeply about our customers and want to be generous, but refunds are only available within 30 days unless required by law" is fine as corporate prose and weak as executable policy.</p>
+    <p>Models are excellent at absorbing tone. They are less reliable at preserving the boundary between "be generous" and "violate the refund policy because the customer sounds sad." When policy matters, extract it into explicit rules. Prefer structured policy artifacts over paragraphs. Number the rules. Define precedence. Separate hard constraints from discretionary guidance.</p>
+    <h2>Examples are load-bearing</h2>
+    <p>Few prompt features are as powerful and as under-governed as examples. A single example can dominate a prompt more effectively than a page of rules. This is useful when the example is correct and terrifying when it was copied from a prototype.</p>
+    <p>Treat examples as fixtures. Review them. Version them. Tie them to tests. Label what each example demonstrates: ambiguity handling, policy precedence, schema shape, tone, refusal, escalation, or citation style. Remove examples that no longer match desired behavior.</p>
+    <h2>Schemas are architecture</h2>
+    <p>If a model response is consumed by software, the output schema is not a formatting preference. It is an interface. The fact that the interface is generated by a stochastic system does not make it less of an interface. It makes it more deserving of paranoia.</p>
+    <p>Natural language is acceptable for humans. Machines deserve structure. Use JSON schemas, typed objects, constrained enums, tool calls, or whatever mechanism your runtime supports. Validate outputs. Reject malformed responses. Decide whether to retry, repair, escalate, or fail closed.</p>
+    <h2>Deployment without ceremony is gambling</h2>
+    <p>Prompt deployment often begins as a text box and matures into an incident category. The correct deployment process depends on risk, but the minimum standard is straightforward: review, test, stage, canary, monitor, and roll back.</p>
+    <p>Shadow evaluation is especially useful. Run the new prompt against real inputs without acting on its outputs, then compare decisions. This catches regressions that synthetic tests miss, such as the model becoming strangely deferential to users who write in bullet points.</p>
+    <h2>The pattern</h2>
+    <p>Prompt-Oriented Architecture is not a call to worship prompts. It is a call to stop lying about them. If prompts define production behavior, they deserve the machinery of production behavior: decomposition, versioning, tests, policy extraction, examples, schemas, ownership, deployment, and observability.</p>
+    <p>The teams that do this well will not have fewer prompts. They will have fewer mysterious prompts. Their systems will still fail, because all systems fail and AI systems have brought a fresh bouquet to the room. But their failures will be diagnosable. Their changes will be reviewable. Their rollbacks will be dull.</p>
+    <p>The better future will know where the prompts are, what they do, who owns them, how they are tested, and how to turn them off when Kyle's paragraph finally comes due.</p>
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>

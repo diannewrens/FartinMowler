@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAG and the Smell of Stale Context — Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on retrieval, stale indexes, metadata, citations, abstention, and document ownership." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--accent); margin: 2rem 0; padding-left: 1rem; color: var(--text); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--text); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--accent-2); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay</p>
+    <h1>RAG and the Smell of Stale Context</h1>
+    <p>April 2026. The office smelled faintly of burnt coffee, warm plastic, and the meeting nobody wanted to have. A product manager had asked the assistant a harmless question: "What is our refund policy for enterprise customers?" The answer came back with the confidence of a senior architect and the accuracy of a raccoon in a filing cabinet.</p>
+    <p>It cited three documents. One had been superseded nine months earlier. One was a draft from Legal called FINAL_final_really_final.pdf. One was a Slack export from a channel created during an outage, when everyone was typing fast and nobody was preserving constitutional law.</p>
+    <p>The model did not hallucinate in the old theatrical sense. It retrieved. That made everyone feel worse.</p>
+    <p>This is the smell of stale context. Retrieval augmented generation gave the model a memory. Then we filled the memory with leftovers, indexed them badly, and acted surprised when the assistant developed the judgment of a refrigerator.</p>
+    <h2>The original sin was believing retrieval meant truth</h2>
+    <p>RAG was sold, sensibly enough, as an antidote to model amnesia. Instead of asking a language model to answer from its parametric soup, you fetch relevant passages from your documents and place them in the prompt. The model answers from that context. In diagrams this looks like plumbing. In production it looks like archaeology.</p>
+    <p>Retrieval gives a model access to text. It does not tell the model whether the text is current, approved, duplicated, sarcastic, confidential, or written by someone who left the company after renaming every service after minor Greek winds.</p>
+    <blockquote><p>A chunk without provenance is just gossip with cosine similarity.</p></blockquote>
+    <h2>Chunking is where documents go to lose their organs</h2>
+    <p>A policy document is not a pile of sentences. It has scope, exceptions, dates, definitions, and authority. A runbook has prerequisites. A design doc has rejected alternatives, open questions, and that one paragraph where the actual decision hides under "Option B" because the author was tired.</p>
+    <p>Naive chunking cuts across these structures. It separates the exception from the rule, the date from the policy, the caveat from the claim. The model receives a paragraph saying "customers may request refunds within 90 days" but not the preceding section saying "applies only to self-serve plans before March 2025."</p>
+    <p>Better chunking respects document shape. Split by headings before token windows. Preserve parent titles. Attach neighboring context when the meaning depends on it. Keep tables as tables when possible. Store section paths. For policies, include effective dates and applicability.</p>
+    <h2>Metadata is not garnish</h2>
+    <p>Most failing RAG systems have metadata in the same way hotel breakfast has fruit: technically present, spiritually absent. The index stores a URL, maybe a title, perhaps a timestamp if the ingestion script was feeling civic-minded. Then the retriever ignores half of it because vector similarity feels more modern than filtering.</p>
+    <ul>
+      <li>canonical source and stable document ID</li>
+      <li>owner or accountable team</li>
+      <li>created, updated, indexed, and effective dates</li>
+      <li>document status: draft, approved, deprecated, archived</li>
+      <li>access classification and audience</li>
+      <li>product, region, version, customer segment, and other applicability fields</li>
+      <li>links to superseding or superseded documents</li>
+    </ul>
+    <p>That list is boring. Boring metadata is how you avoid exciting incidents.</p>
+    <h2>Freshness is a system property, not a cron job</h2>
+    <p>Freshness is not the age of the index. It is the distance between what the assistant says and what the organization currently believes. That distance can grow in minutes. Pricing changes. Legal updates terms. Support patches the runbook after an outage. Engineering deprecates an endpoint.</p>
+    <p>A fresh index built from stale documents is still stale. A stale index built from fresh documents is also stale. There are two clocks: the document clock and the ingestion clock. Many teams monitor only the second because it has nicer metrics.</p>
+    <h2>Citations are receipts, not decorations</h2>
+    <p>A citation should answer a simple question: where did this claim come from? Many systems instead cite the retrieved bundle, which is like citing the entire garage because you found a screwdriver somewhere inside.</p>
+    <p>Good citation design is annoyingly specific. The answer should point to the exact section, paragraph, table row, or source span that supports the claim. If the model combines two sources, it should cite both. If the evidence is weak, the assistant should say so.</p>
+    <h2>Abstention is a feature</h2>
+    <p>RAG assistants often inherit the worst habit of helpful software: they would rather be useful than correct. Ask for a policy. The answer is partial, conflicting, or stale. The assistant smiles through the fumes and produces a confident paragraph, because nobody added a reward for saying "I don't know."</p>
+    <p>Abstention is not failure. It is the pressure valve that keeps uncertain systems from pretending to be oracles. A good assistant should decline to answer when retrieval returns no authoritative source, when sources conflict, when the documents are too old for the domain, when the user lacks access to the underlying material, or when the question requires a human owner.</p>
+    <h2>Evals should measure retrieval before eloquence</h2>
+    <p>Many RAG evaluations start at the finished answer. Was it helpful? Was it fluent? Did it contain the expected phrase? This is like judging a restaurant by the menu font while the walk-in cooler is quietly achieving sentience.</p>
+    <p>Evaluate the pipeline in layers. First, can the system retrieve the right source? Then can it rank the right source above plausible junk? Then can it extract the relevant span? Then can the model answer using only that span? Then can it cite the span accurately? Only after that should anyone admire the prose.</p>
+    <h2>Source of truth is a people problem with an API costume</h2>
+    <p>The phrase "source of truth" appears in architecture meetings right before everyone discovers there are seven. The public docs say one thing. The support macros say another. The contract template says something legally binding but not searchable. The wiki has a page titled "New pricing model" that is three pricing models old.</p>
+    <p>RAG exposes this mess because it removes the human habit of knowing which document to distrust. Senior employees carry a private ranking in their heads: this folder is official, that page is abandoned, never trust the migration spreadsheet, ask Priya about invoicing. The assistant has no such folklore unless you encode it.</p>
+    <h2>The stale context smell test</h2>
+    <ul>
+      <li>Can it tell whether a retrieved document is approved, draft, deprecated, or archived?</li>
+      <li>Can it explain why it trusted one source over another?</li>
+      <li>Can it cite the exact span supporting each claim?</li>
+      <li>Can it refuse when the only sources are old, conflicting, or unauthorized?</li>
+      <li>Can a document owner remove bad information from answers without begging an ML team?</li>
+      <li>Can the eval suite catch a policy update, a stale duplicate, and a missing answer?</li>
+    </ul>
+    <p>If the answer to most of these is no, you do not have knowledge augmentation. You have semantic compost. It may produce surprising growth. I would not serve it to customers.</p>
+    <h2>The model is not your librarian</h2>
+    <p>RAG is still a good pattern. It is one of the few practical ways to make language models useful inside organizations with private, changing information. The problem is not retrieval. The problem is pretending retrieval dissolves the old work of stewardship.</p>
+    <p>Before RAG, bad documentation made humans slower. After RAG, bad documentation makes machines confidently wrong at scale. The fix is wonderfully unromantic. Treat documents as maintained software. Give them owners. Version them. Deprecate them. Test them. Monitor freshness. Preserve provenance. Teach the assistant to say when it does not know. Make citations earn their little blue underlines.</p>
+    <p>Architecture is often the art of moving ambiguity to the place where it can do the least harm. RAG moves ambiguity into the prompt unless you stop it earlier. The smell of stale context is not a model problem wearing a document hat. It is an organizational problem, indexed. Open a window. Then fix the corpus.</p>
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>

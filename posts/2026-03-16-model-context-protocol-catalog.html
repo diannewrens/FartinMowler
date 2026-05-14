@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Model Context Protocol Catalog — Fartin Mowler</title>
+  <meta name="description" content="A catalog of MCP-style integration patterns: tools, resources, prompts, auth, audit, local servers, and remote fog." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--accent); margin: 2rem 0; padding-left: 1rem; color: var(--text); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--text); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--accent-2); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern catalog</p>
+    <h1>The Model Context Protocol Catalog</h1>
+    <p>March 2026. The industry has discovered, with the startled expression of a man finding a raccoon in his HVAC system, that language models are more useful when connected to the rest of the computer. This insight has been rediscovered every quarter since 2022 under names such as tools, functions, agents, plugins, actions, assistants, and the thing Gary wrote that can restart Kubernetes if you phrase the request politely.</p>
+    <p>The Model Context Protocol, or MCP, is the latest attempt to stop every integration from becoming a custom tube taped to the side of a chatbot. This is good. Protocols are civilization. They let two pieces of software disappoint each other in predictable formats.</p>
+    <p>MCP gives us a vocabulary for exposing tools, resources, and prompts to model clients without rebuilding the entire buffet for each host application. It does not, however, remove architecture. If anything, it concentrates architecture into a smaller room, warms it gently, and asks whether anyone remembered ventilation.</p>
+    <h2>1. The adapter smell</h2>
+    <p>The first MCP server in any organization is usually an adapter around an API that already exists. This is proper. The second is also an adapter. The ninth is an adapter around three adapters, two shell scripts, and a Slack bot from 2019. At that point the faint odor is not innovation. It is coupling.</p>
+    <p>An MCP server should translate model-friendly operations into bounded system actions. It should not become the new enterprise service bus simply because it speaks JSON and the LLM says thank you.</p>
+    <ul>
+      <li>Good adapter: create_linear_issue with explicit fields, validation, and project constraints.</li>
+      <li>Risky adapter: linear_graphql where arbitrary queries are accepted from model text.</li>
+      <li>Bad adapter: do_business_thing, which forwards natural language to a privileged backend and hopes the vibes pass QA.</li>
+    </ul>
+    <h2>2. The tool pantry</h2>
+    <p>MCP makes tools discoverable. Discovery is intoxicating. Soon every client starts with eighty-seven tools: filesystem, calendar, GitHub, Datadog, Jira, browser, payments, Snowflake, warehouse forklift, and a small weather service added by an intern because the demo needed context.</p>
+    <p>The tool pantry pattern says tools should be present, labeled, and reachable, but not all placed on the counter. Organize them by task context. A coding assistant needs repository tools, issue tools, and maybe CI logs. It probably does not need invoice refunds.</p>
+    <blockquote><p>If a tool is available "just in case," the case will eventually arrive wearing a fake mustache and carrying user input.</p></blockquote>
+    <h2>3. The least-tool principle</h2>
+    <p>The least-tool principle is least privilege wearing a little paper hat that says latency. Give the model the minimum tool surface required to complete the current job. This sounds obvious until the first executive demo, when someone asks whether the assistant can "just also update Salesforce," and suddenly the recipe bot can modify pipeline forecasts.</p>
+    <p>Implement least-tool in layers. At startup, register servers broadly. At session creation, select role-appropriate servers. At task planning, pass only the operations relevant to the current step. At execution, require confirmation or policy approval for destructive actions.</p>
+    <h2>4. The resource boundary</h2>
+    <p>MCP resources are often described as context the model can read. That is accurate in the way "the ocean is wet" is accurate: technically true, architecturally insufficient. Resources decide what becomes context, when it is loaded, how fresh it is, and whether the model sees one document or the entire attic.</p>
+    <ul>
+      <li>Use stable resource identifiers, not fragile file paths embedded in prose.</li>
+      <li>Return metadata first: title, owner, freshness, permissions, size, and summary.</li>
+      <li>Chunk large resources intentionally, preserving headings and citations.</li>
+      <li>Make stale data visible. "Last indexed six weeks ago" is context too.</li>
+    </ul>
+    <h2>5. Prompt libraries, not prompt landfills</h2>
+    <p>MCP prompts are reusable interaction templates. This is useful because every organization eventually develops a folklore of prompts: the incident review prompt, the PR summary prompt, the "make this sound less like legal wrote it after coffee" prompt. Without structure, these live in Notion pages, Slack pins, and the private notes of the one engineer who still says prompt engineering without irony.</p>
+    <p>A prompt library should encode tasks, inputs, constraints, and expected outputs. It should not become a landfill of inspirational spellcraft. "You are a world-class ninja rockstar strategist" is not a reusable asset. It is confetti in a config file.</p>
+    <h2>6. Local servers and the warm sock drawer</h2>
+    <p>Local MCP servers are charming. They run over stdio, live near the user, and can touch files, shells, editors, and devices. They feel like Unix pipes with a language model wearing mittens. For developer workflows, local servers are often the right answer.</p>
+    <p>But local does not mean safe. It means close. A local server with filesystem access can do local damage. A local server that inherits the full environment can exhale credentials like a nervous trumpet. The pattern is capability hygiene: pass only required directories, filter environment variables, pin package versions for serious work, and log tool calls locally.</p>
+    <h2>7. Remote servers and the enterprise fog machine</h2>
+    <p>Remote MCP servers are inevitable. Teams want shared integrations, centralized auth, policy enforcement, usage logs, and one place to update the Salesforce wrapper after Salesforce changes the API for spiritual reasons. A remote server can be excellent architecture: easier to govern, easier to observe, easier to patch.</p>
+    <p>It can also become fog. Once the tool catalog lives behind a remote endpoint, clients may stop understanding what actions really occur. "Call the customer server" might read records, compute entitlements, modify subscriptions, and alert an account manager. The model sees one tool. The audit team sees a scented cloud.</p>
+    <h2>8. Authentication is not a mood</h2>
+    <p>Many early tool systems authenticated by vibes. The user was logged into the chat client, the tool had a token somewhere, and the model was assumed to be acting on behalf of whoever typed last. This works until a shared channel, copied transcript, scheduled agent, or malicious document asks the assistant to rotate the payroll account.</p>
+    <p>MCP systems need explicit identity propagation. Who is the human? What workspace are they in? What server accepted the request? Which downstream credential was used? Was the action delegated, automated, or directly confirmed? These are not bureaucratic questions. They are the difference between an assistant and a raccoon with OAuth.</p>
+    <h2>9. Audit as a first-class output</h2>
+    <p>Tool calls are decisions with side effects. Even read calls matter, because reading can expose confidential context that shapes subsequent output. An MCP architecture without audit is a restaurant that keeps receipts only for fires.</p>
+    <p>Good audit records the actor, tool name, arguments after redaction, authorization decision, resource touched, result class, duration, and correlation IDs. For destructive operations, store the approval event and the precondition checked.</p>
+    <h2>10. The catalog is a product</h2>
+    <p>The word catalog invites negligence. A catalog sounds like a generated list, something the system emits after scanning servers. But the MCP catalog is a product surface. It is how the model understands your organization's capabilities. Bad names, overlapping tools, stale descriptions, and inconsistent schemas create behavior that looks like model stupidity but is often catalog mildew.</p>
+    <p>Curate the catalog. Remove dead tools. Merge duplicates. Mark dangerous tools. Write examples. Keep schemas strict. Test descriptions by asking a model to choose among similar tools and explain its choice.</p>
+    <h2>11. Error messages for models and mammals</h2>
+    <p>Traditional APIs return errors for programmers. MCP tools return errors into a reasoning loop. That means error messages are not just diagnostics; they are steering inputs. "500 internal error" tells the model nothing except perhaps to try again until rate limits squeal.</p>
+    <p>Design errors with recovery paths. Indicate whether the failure is permanent, transient, authorization-related, validation-related, or ambiguous. Include safe next steps. A system is reliable when it fails in ways that make the next correct action obvious.</p>
+    <h2>Closing the vent</h2>
+    <p>MCP is not the final protocol. No protocol is final unless it is printed on a mainframe manual and guarded by someone named Don. But MCP captures a shape the industry needed: a common way for models to discover and use external capabilities without every application becoming a bespoke drawer of knives.</p>
+    <p>The winning teams will not be the ones with the longest tool lists. They will be the ones with the cleanest boundaries, the dullest auth, the best audit, and the fewest mysterious adapters emitting warm architectural gas behind the drywall.</p>
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
