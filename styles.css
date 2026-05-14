@@ -70,15 +70,15 @@ a { color: inherit; }
 }
 
 .hero {
-  min-height: 52vh;
-  padding: 4.5rem 0 4rem;
+  min-height: 48vh;
+  padding: 4rem 0 3.55rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
-  gap: clamp(2rem, 5vw, 5rem);
+  gap: clamp(1.75rem, 4vw, 4rem);
   align-items: end;
   border-top: 1px solid rgba(255,255,255,.04);
 }
-.eyebrow, h2, .post-meta, .note-label {
+.eyebrow, h2, .post-meta, .note-label, .featured-label {
   font-family: var(--sans);
   text-transform: uppercase;
   letter-spacing: .14em;
@@ -91,10 +91,10 @@ a { color: inherit; }
 }
 h1 {
   max-width: 780px;
-  margin: 0 0 1.15rem;
-  font-size: clamp(3.45rem, 7.2vw, 6.4rem);
-  line-height: .9;
-  letter-spacing: -.064em;
+  margin: 0 0 1rem;
+  font-size: clamp(3.3rem, 6.8vw, 6rem);
+  line-height: .91;
+  letter-spacing: -.06em;
   text-wrap: balance;
 }
 .lede {
@@ -105,28 +105,36 @@ h1 {
 }
 .hero-note {
   position: relative;
-  padding: 1.25rem 1.25rem 1.25rem 1.4rem;
-  border-left: 3px solid var(--amber);
-  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
-  box-shadow: 0 18px 55px rgba(0,0,0,.22);
+  padding: 1rem 1rem 1rem 1.05rem;
+  border-left: 2px solid rgba(245, 158, 11, .78);
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(255,255,255,.033), rgba(255,255,255,.012));
+  box-shadow: 0 14px 42px rgba(0,0,0,.18);
 }
 .hero-note::before {
   content: "〰";
   position: absolute;
-  top: -1.25rem;
-  right: 1rem;
-  color: rgba(155, 229, 41, .55);
-  font-size: 2rem;
+  top: -.9rem;
+  right: .85rem;
+  color: rgba(155, 229, 41, .42);
+  font-size: 1.45rem;
 }
 .note-label {
-  margin: 0 0 .45rem;
+  display: inline-flex;
+  margin: 0 0 .55rem;
+  padding: .18rem .42rem;
   color: var(--amber);
-  font-size: .68rem;
+  font-size: .62rem;
+  letter-spacing: .12em;
+  border: 1px solid rgba(245, 158, 11, .28);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, .055);
 }
 .hero-note p:last-child {
   margin: 0;
   color: var(--muted);
-  font-size: 1.02rem;
+  font-size: .97rem;
+  line-height: 1.5;
 }
 
 .posts, .about {
@@ -145,9 +153,12 @@ h2 {
   font-size: .78rem;
 }
 .section-heading p {
-  margin: 0 0 1.4rem;
+  margin: .15rem 0 1.15rem;
+  padding-top: .45rem;
   color: var(--dim);
   font-family: var(--sans);
+  font-size: .9rem;
+  border-top: 1px solid rgba(255,255,255,.07);
 }
 
 .post-card {
@@ -157,11 +168,11 @@ h2 {
 }
 .post-card.featured {
   margin-left: 190px;
-  padding: 1.45rem;
-  border: 1px solid rgba(155, 229, 41, .22);
-  border-radius: 22px;
+  padding: 1.2rem 1.25rem 1.25rem;
+  border: 1px solid rgba(155, 229, 41, .18);
+  border-radius: 18px;
   background: linear-gradient(135deg, rgba(26,23,21,.96), rgba(33,29,26,.9));
-  box-shadow: 0 24px 70px rgba(0,0,0,.24);
+  box-shadow: 0 18px 55px rgba(0,0,0,.2);
 }
 .archive-grid {
   margin-left: 190px;
@@ -180,6 +191,17 @@ h2 {
 .post-meta span + span {
   color: var(--dim);
 }
+.featured-label {
+  display: inline-flex;
+  margin: 0 0 .55rem;
+  padding: .18rem .44rem;
+  color: var(--toxic);
+  font-size: .62rem;
+  letter-spacing: .12em;
+  border: 1px solid rgba(155, 229, 41, .25);
+  border-radius: 999px;
+  background: rgba(155, 229, 41, .055);
+}
 .post-card h3 {
   margin: 0 0 .55rem;
   font-size: clamp(1.25rem, 2vw, 1.85rem);
@@ -188,7 +210,7 @@ h2 {
   text-wrap: balance;
 }
 .post-card.featured h3 {
-  font-size: clamp(2rem, 4vw, 3.35rem);
+  font-size: clamp(1.75rem, 3.25vw, 2.75rem);
 }
 .post-card h3 a {
   text-decoration: none;
