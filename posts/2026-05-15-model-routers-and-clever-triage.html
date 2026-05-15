@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Model Routers and the Smell of Clever Triage - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on model routing, cheap inference, escalation paths, evaluation drift, and why clever triage should not become invisible architecture." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 15, 2026</p>
+    <h1>Model Routers and the Smell of Clever Triage</h1>
+
+    <p>Every AI platform eventually discovers model routing. The bill arrives, someone stops breathing normally, and the team decides the expensive model should not answer every question about password resets, lunch menus, and whether the printer has feelings.</p>
+
+    <p>This is reasonable. Routing is one of the few AI architecture ideas that survives contact with finance. Use a small model for easy work. Escalate hard work to a stronger model. Send structured extraction to the model trained for extraction. Keep latency low. Avoid burning premium tokens on autocomplete for a field called "comments".</p>
+
+    <blockquote>
+      <p>A router is a bouncer for inference. If it starts choosing the fire exits, you have given the bouncer architecture.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Model routing is useful when it is explicit, measurable, and boring.</li>
+        <li>The smell starts when the router becomes an invisible policy engine.</li>
+        <li>Cheap models are allowed to say "not me". Forcing confidence into them is how pennies become incidents.</li>
+        <li>Route by task risk and evidence quality, not just prompt length and vibes.</li>
+        <li>Keep routing decisions in the trace, because future-you will want to know why the discount goblin handled the lawsuit.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The clever triage smell appears when a routing layer starts as cost control and quietly becomes decision architecture. At first it chooses between models. Then it chooses between tools. Then it chooses whether to retrieve documents, whether to ask a human, whether to run a safety check, and whether the user really meant the thing they typed.</p>
+
+    <p>Nothing looks dramatic in a diagram. There is a small box labelled "router" between the application and the models. It seems harmless, like a hallway. But production hallways are where people put filing cabinets, extension cords, and eventually a refrigerator nobody admits belongs to them.</p>
+
+    <p>Symptoms are easy to recognize. Incidents have explanations like "the request was classified as simple". Evaluation reports show aggregate accuracy while hiding which route handled which failures. Product teams tune routing thresholds to hit latency targets. Security asks why a low capability model answered a high risk question, and everyone suddenly becomes interested in logs that were not collected.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Routing feels like plumbing because the inputs and outputs are tidy. Prompt in, model choice out. The hard part is that a routing decision is also a claim about risk. It says this request is easy enough, safe enough, current enough, and reversible enough for this path.</p>
+
+    <p>Teams often start with cheap signals: token count, language, user tier, endpoint name, maybe a quick classification prompt. Those signals are not useless. They are just incomplete. A five word request can be dangerous. "Delete inactive accounts" is short. "Summarize this policy" may be safe, unless the policy is draft, stale, confidential, or contradicted by a newer memo hiding in the swamp.</p>
+
+    <p>The router also rots differently from the models. A model upgrade changes behavior. A product launch changes traffic mix. A new customer segment brings stranger questions. A once safe route becomes unsafe because the world moved around it. This is evaluation drift with a clipboard.</p>
+
+    <p>Cost pressure makes it worse. Once a routing layer proves it can save money, it attracts heroic optimization. The team starts shaving escalations. The dashboard improves. The support queue quietly fills with weird cases that took the scenic route through the cheapest possible intelligence. The architecture smells faintly of fiscal responsibility and burnt hair.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat the router as a policy-bearing component, not an optimization trick. Give it a contract. The contract should say which signals it may use, which risks it must consider, which decisions it may make alone, and when it must escalate. If the router can affect correctness, safety, privacy, or money, it belongs in architecture review with the other suspicious boxes.</p>
+
+    <p>A good router separates task shape from task risk. Task shape asks what kind of work this is: classification, extraction, summarization, code edit, search, tool action, customer advice. Task risk asks what happens if the answer is wrong: annoyance, wasted time, data leak, bad contract term, broken build, refund, access grant, legal smoke.</p>
+
+    <p>Route on both. A low risk summarization can go to a small model. A high risk summarization should get better retrieval, stricter citation, or human review. A simple extraction from a trusted invoice can be cheap. A simple extraction from a disputed contract should not be treated like a receipt from a sandwich shop.</p>
+
+    <p>Build an escalation ladder instead of a single clever gate. The first step can be cheap and fast. It should be allowed to abstain. If confidence is low, sources conflict, permissions are unclear, or the requested action has teeth, the request moves up. The higher step may use a stronger model, more retrieval, deterministic validation, sampled review, or a human. Escalation is not failure. It is drainage.</p>
+
+    <p>Keep the routing trace. Record the route, signals, thresholds, model versions, prompt versions, retrieved evidence, abstentions, and overrides. You do not need private chain of thought. You do need enough evidence to replay the decision when the customer asks why the system produced nonsense with excellent latency.</p>
+
+    <p>Evaluate per route. Overall accuracy is where routing bugs go to nap. Measure false cheap accepts, unnecessary escalations, unsafe non-escalations, latency, cost, correction rate, and failure severity by path. Keep adversarial cases that are short, polite, and dangerous. Routers love mistaking politeness for harmlessness. So do people, but people are harder to rollback.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can you explain, from logs, why a request took a specific route?</li>
+      <li>Does the router consider risk, source quality, permissions, and action reversibility?</li>
+      <li>Can cheap routes abstain without being punished by the metric dashboard?</li>
+      <li>Do evals report quality and incident rate per route, not just in aggregate?</li>
+      <li>Is there a named owner for routing thresholds, rollbacks, and drift review?</li>
+    </ul>
+
+    <p>If most answers are no, you do not have model routing. You have a token coupon with opinions. It may save money. It may also mail the hard cases to the bargain basement and call the elevator a strategy.</p>
+
+    <p>Use routers. Please do. They are practical, necessary, and much less embarrassing than pretending one giant model should handle every crumb of cognition in the building. But make them explicit. Give them traces. Let them escalate. Review them when traffic changes. Cheap inference is good. Secret cheap judgment is where the smell gets architectural.</p>
+
+    <p>The router should know which model gets the job. It should not become the quiet little desk where accountability goes to pickle.</p>
+
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
