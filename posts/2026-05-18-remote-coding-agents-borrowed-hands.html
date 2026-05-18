@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Remote coding agents and the smell of borrowed hands - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on remote coding agents, issue queues, sandboxes, review boundaries, and why delegated code needs receipts before it joins the house." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 18, 2026</p>
+    <h1>Remote coding agents and the smell of borrowed hands</h1>
+
+    <p>The new fashion is to hand a ticket to a remote coding agent and receive a branch later, like dry cleaning with unit tests. The appeal is obvious. Backlogs are long, engineers are tired, and half the work in a codebase looks small until someone opens the closet and finds twelve years of adapter classes wearing each other's coats.</p>
+
+    <p>There is nothing foolish about delegation. A service that can clone a repository, inspect an issue, edit files in a sandbox, run tests, and propose a change is a useful tool. It can remove drudgery. It can draft migrations. It can chase simple bugs while humans argue about names, which remains our oldest distributed system.</p>
+
+    <blockquote>
+      <p>A remote coding agent is not a junior developer. It is a borrowed pair of hands attached to a very confident filing cabinet.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Remote coding agents work best on bounded changes with crisp tests and boring blast radius.</li>
+        <li>The smell starts when the issue queue becomes the architecture process.</li>
+        <li>A branch is not evidence. The receipt is the task, context, commands, diffs, tests, and review notes.</li>
+        <li>Give agents sandboxes, narrow credentials, and explicit stop signs.</li>
+        <li>Do not reward volume unless you enjoy sorting confetti during an outage.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The borrowed hands smell appears when teams treat remote code work as capacity instead of change control. At first the jobs are safe: update a dependency, add a failing test, fix a typo in a docs page. Then the tickets get wider. Refactor the billing flow. Simplify authorization. Improve performance. Make the import pipeline more robust, a phrase that has ruined many afternoons.</p>
+
+    <p>The agent still returns a branch. The branch may even pass the tests. The problem is that the branch arrives from a narrow conversation with the repository, not from the messy social memory around it. It may not know that the odd duplicate function exists because one customer exports CSV with a medieval delimiter. It may not know that a slow query is kept slow because the fast path once melted a lock table. It may not know that the ugly interface is ugly because three teams share it and none of them answer calendar invites.</p>
+
+    <p>Humans miss these things too. That is not an excuse. It is a reminder that the system needs guardrails for everyone, especially for a worker that can produce plausible diffs without feeling the shame of pager duty.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Issue trackers make code work look more separable than it is. A ticket has a title, a description, a label, maybe a screenshot, and the comforting fiction of scope. A remote worker loves this format because it can turn the text into a plan. Managers love it because throughput becomes visible. Engineers love it for roughly ten minutes, until they review five branches that each solved the ticket and nicked a different pipe behind the wall.</p>
+
+    <p>The economic pressure is real. If a machine can clear small tasks, people want to feed it larger tasks. If it can open ten pull requests, someone will ask why it cannot open fifty. The metric creeps from saved time to generated activity. Soon the team is not asking whether the change should exist. It is asking whether the change is acceptable enough to merge before lunch.</p>
+
+    <p>Remote execution adds another layer of scent. The agent needs tools. It may need package registries, test databases, internal docs, issue comments, build logs, feature flags, and secrets that should not be secrets but have somehow become load-bearing folklore. Every permission turns the worker from a text editor into a participant in the production habitat. That deserves more ceremony than a happy checkbox called "allow repository access".</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat remote coding agents as constrained change producers. They may propose work. They may gather evidence. They may not become an unlabelled side door into design, security, or release authority.</p>
+
+    <p>Start by shaping the work. Good tasks have a small surface area, a clear failure, local reproduction steps, and tests that mean something. Bad tasks ask for judgment across product intent, data contracts, permissions, performance, and old promises made in conference rooms that no longer exist. If a senior engineer would need three conversations before editing code, do not throw the ticket into the hopper and call it modernization.</p>
+
+    <p>Require a receipt with every branch. The receipt should include the prompt or task text, repository state, files touched, commands run, test results, skipped tests, assumptions, and any places where the worker guessed. This is not a diary. It is the chain of custody for a change. Without it, reviewers have to reconstruct the little adventure from a diff and a brave commit message.</p>
+
+    <p>Build sandboxes that are boring on purpose. The worker should have short-lived credentials, scoped network access, disposable compute, and no path from curiosity to production data. If it needs a sample database, give it one. If it needs logs, scrub them. If it needs to run a migration, the answer is usually "write the migration and stop there". A tool that can edit code and touch real systems is no longer just helpful. It is holding a wrench near the gas line.</p>
+
+    <p>Make review narrower, not lazier. A reviewer should know what kind of change this is, which tests matter, which risk category applies, and which human owns the decision to merge. For tiny patches, that may be quick. For behavioral changes, require design notes or human pairing before code generation starts. The agent can draft, but it should not quietly decide that the architecture would look nicer if the service boundary moved four inches to the left.</p>
+
+    <p>Keep score by outcomes. Count rework, rollback rate, review time, escaped defects, test improvements, and the number of branches closed because the task was poorly framed. Pull request count is a vending machine metric. It tells you snacks came out. It does not tell you whether dinner is ruined.</p>
+
+    <h2>The fart test</h2>
+
+    <ul>
+      <li>Can you say which tasks are safe for remote coding without arguing from optimism?</li>
+      <li>Does every branch include a useful receipt, not just a cheerful summary?</li>
+      <li>Are credentials short lived, scoped, and boring to audit?</li>
+      <li>Can reviewers see the commands, tests, assumptions, and skipped checks?</li>
+      <li>Is someone measuring rollback and rework instead of celebrating branch confetti?</li>
+    </ul>
+
+    <p>If most answers are no, you do not have delegated development. You have a code piñata hanging over the merge queue. It may drop candy. It may also drop a billing regression wearing a party hat.</p>
+
+    <p>Use remote coding agents. They are useful, and refusing them on principle is just another way to make humans perform paste rituals in expensive chairs. But give the borrowed hands a workbench, a checklist, and a locked door behind them. The future of software may include machines opening pull requests. The future of architecture still depends on knowing which hands were allowed near the load-bearing beams.</p>
+
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
