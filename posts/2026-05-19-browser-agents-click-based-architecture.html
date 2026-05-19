@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Browser agents and the smell of click-based architecture - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on browser agents, UI automation, brittle workflows, permissions, receipts, and why clicking through production is not an integration strategy." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 19, 2026</p>
+    <h1>Browser agents and the smell of click-based architecture</h1>
+
+    <p>The browser agent is the latest little miracle with a mouse. Give it a goal, let it look at a web page, and watch it click buttons with the haunted confidence of an intern who found the production admin console on a Friday.</p>
+
+    <p>This is genuinely useful. A model that can read a screen, fill a form, compare pages, and handle a dull workflow can save real time. It can test messy third party tools. It can operate legacy systems whose API is mostly rumor and invoice PDFs. It can do the kind of glue work that makes a grown engineer stare out a window and consider goat farming.</p>
+
+    <blockquote>
+      <p>A browser agent is not an integration layer. It is a very patient raccoon in a trench coat, operating your UI with a permission badge.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Browser agents are good for low-risk, observable chores where the UI is the only available surface.</li>
+        <li>The smell starts when clicking becomes architecture instead of a temporary bridge.</li>
+        <li>Every browser-run workflow needs receipts: page state, inputs, outputs, screenshots, decisions, and stop conditions.</li>
+        <li>If the action changes money, permissions, customer data, or irreversible state, require a better interface or a human checkpoint.</li>
+        <li>Do not confuse "the agent completed the task" with "the system now has an integration." One is a result. The other is plumbing.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The click-based architecture smell appears when a team builds business process on top of visual navigation. At first it is harmless. The agent logs into a vendor dashboard, downloads a report, copies a number into a spreadsheet, and writes a note. Everyone claps because the old process involved three tabs, two passwords, and a person named Brenda who somehow knew which export button was lying.</p>
+
+    <p>Then the workaround becomes the workflow. The agent starts closing tickets, updating accounts, approving invoices, creating campaigns, changing feature flags, or moving customer records between tools. Nobody meant to build an integration. They just kept adding one more instruction to the browser script until the raccoon had keys to the pantry and opinions about revenue recognition.</p>
+
+    <p>The problem is not that browser automation is fake. The problem is that it is too real. It can press the same dangerous buttons humans press. It inherits the ambiguity of the UI: hidden state, stale pages, modal dialogs, partial saves, localization, A/B tests, browser extensions, disabled buttons that look enabled, and confirmation screens written by people who think "Submit" is a complete sentence.</p>
+
+    <p>Traditional integrations fail loudly when a schema changes. Browser workflows often fail sideways. The agent finds a similar button. It clicks the wrong row. It retries after a timeout and submits twice. It succeeds on screen but misses the toast at the bottom saying the change will apply after nightly sync, which is software's way of saying the fart will arrive later.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Browser agents are seductive because they erase an ugly truth: many organizations do not have clean system boundaries. The API is incomplete. The vendor charges for webhooks like they are imported truffles. The internal admin tool grew from a debugging panel into a cathedral of tiny controls. The real business process lives in screenshots, Slack threads, and the muscle memory of whichever operator has not quit yet.</p>
+
+    <p>So the browser becomes the universal adapter. It can see what a person sees. It can use tools that were never designed for automation. It can work across systems that refuse to know each other exist. This is powerful in the way a crowbar is powerful. Sometimes you need one. If you start designing doorways around crowbars, the building has made a choice.</p>
+
+    <p>The other pressure is speed. Writing a proper integration means authentication, contracts, idempotency, retry semantics, rate limits, audit logs, test environments, and a conversation with the team that owns the receiving system. Teaching an agent to click through the dashboard can look cheaper. It often is cheaper for the first week. Then the UI changes, the agent misreads a table, someone asks for compliance evidence, and the savings evaporate into a warm little mist.</p>
+
+    <p>There is also a management smell here. Browser automation produces visible demos. A person says, "Watch, it does the whole thing," and the room sees motion. APIs are boring. Contracts are boring. Dry run modes are boring. Boring is what keeps the invoice approval bot from buying seventeen enterprise seats for a customer named Testy McTestface.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat browser agents as temporary operators, not permanent interfaces. They may use a UI when no safer surface exists, but the architecture should still name the boundary, risk, owner, and exit plan.</p>
+
+    <p>Start by sorting workflows by consequence. Reading a dashboard, collecting public information, comparing UI states, and drafting a report are reasonable browser-agent jobs. Changing billing, permissions, customer data, legal records, production configuration, or anything that triggers an external commitment needs a stronger pattern: API access, a purpose-built tool, a queue with human approval, or at least a dry run that shows exactly what will change before it happens.</p>
+
+    <p>Make the browser session auditable. Save the starting URL, account identity, timestamps, visible inputs, screenshots before and after each meaningful action, extracted text, clicked selectors when available, model decisions, and final result. A cheerful summary is not enough. If the workflow changes state, the receipt should let a reviewer reconstruct the run without watching a screen recording like a detective in a very dull noir film.</p>
+
+    <p>Design stop signs. The agent should stop when it sees unfamiliar screens, changed labels, missing totals, duplicate records, unexpected permissions, captchas, payment prompts, legal language, or anything that looks like a destructive action. Do not ask the model to "be careful". Careful is not a control. Careful is a scented candle placed beside a leaking pipe.</p>
+
+    <p>Where possible, put a small real tool behind the browser. Instead of asking the agent to click through twelve steps every day, give it a narrow internal endpoint that performs the safe part and returns a preview. The browser can still gather context or handle the vendor's cursed export page, but the system of record should receive structured commands with idempotency keys, validation, and logs. Less theatre. More plumbing.</p>
+
+    <p>Finally, keep pressure on the exit plan. If a browser workflow runs every day, it is no longer an experiment. It is an integration wearing stage makeup. Budget time to replace it, harden it, or delete it before the person who understands the workaround leaves and the raccoon becomes senior staff.</p>
+
+    <h2>The fart test</h2>
+
+    <ul>
+      <li>Would this workflow be unacceptable if a tired human did it at 2 a.m. with the same permissions?</li>
+      <li>Can you replay the run from receipts without trusting the agent's summary?</li>
+      <li>Does the agent stop on unfamiliar UI, or does it improvise near production state?</li>
+      <li>Are irreversible actions gated by an API, approval queue, or human checkpoint?</li>
+      <li>Is there a named owner and exit plan if the browser workflow becomes daily business?</li>
+    </ul>
+
+    <p>If the answers are mostly no, you do not have automation. You have a tiny employee made of vibes, screenshots, and borrowed cookies. It may finish the chore. It may also discover a button nobody meant to expose and click it with the serene confidence of a toaster.</p>
+
+    <p>Use browser agents. They are excellent for scraping the barnacles off modern software. Just do not mistake barnacle scraping for naval architecture. When clicking becomes the foundation, the building eventually learns to smell like a browser tab left open in a conference room.</p>
+
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
