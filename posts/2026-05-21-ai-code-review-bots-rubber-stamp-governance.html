@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI code review bots and the smell of rubber-stamp governance - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI code review bots, review theater, ownership, evidence, escalation, and why a comment avalanche is not governance." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 21, 2026</p>
+    <h1>AI code review bots and the smell of rubber-stamp governance</h1>
+
+    <p>Code review bots have entered the pull request like a junior architect with a whistle and unlimited coffee. They notice missing null checks. They complain about naming. They suggest tests. Sometimes they catch the awkward little footgun everyone else skimmed past because the diff was 900 lines and morale was low.</p>
+
+    <p>Good. We need help. Review is overloaded, senior engineers are tired, and most teams quietly pretend that two approvals means two people understood the change. A bot that spots boring defects is useful. A bot that turns approval into theater is not.</p>
+
+    <blockquote>
+      <p>An AI reviewer is a smoke alarm, not the fire marshal. If it starts signing permits, check the batteries and evacuate management.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>AI review is useful for cheap, local checks. It is weak at ownership, intent, and architectural risk.</li>
+        <li>The smell starts when bot comments count as governance instead of evidence.</li>
+        <li>Separate lint, review assistance, policy checks, and human approval. They are different jobs.</li>
+        <li>Every AI comment should explain what it saw, why it matters, and what would prove it wrong.</li>
+        <li>If nobody owns the final call, the bot did not improve review. It added fog with line numbers.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The rubber-stamp governance smell appears when a team adds AI review to pull requests and slowly lets the presence of bot output stand in for judgment. The bot leaves twelve comments. The author fixes four, dismisses five, and argues with three. The dashboard says review happened. The change merges. Everyone feels audited, which is not the same thing as being safe.</p>
+
+    <p>This smell is easy to miss because the bot is visibly busy. It writes in complete sentences. It quotes the diff. It suggests patches. It produces the kind of artifact managers can point at during a process discussion and say, "See, we have automated review." Somewhere in the distance, an incident report starts stretching.</p>
+
+    <p>The worst version is not the noisy bot. Noise is annoying, but at least people complain. The worst version is the polite bot that finds plausible issues, misses the real boundary violation, and leaves the team with a faint sense of coverage. That faint sense is the dangerous gas. It smells like process maturity and old carpet.</p>
+
+    <p>Human reviewers then adapt around it. They scan less because the bot already looked. They avoid commenting on style because the bot handles style. They stop asking architecture questions because the pull request has a green AI check and nobody wants to be the person who slows down progress by being right in public.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Code review is many jobs wearing one badge. It checks syntax, tests, naming, security, backward compatibility, product intent, operational risk, ownership, and whether the change belongs in this system at all. A model can help with some of those jobs. It can pattern-match against local code. It can notice obvious missing tests. It can compare a diff to a checklist. It can ask a useful question when the code does something surprising.</p>
+
+    <p>It cannot reliably know the social contract around the code. It does not know that this service is owned by a team that is currently migrating off it. It does not know that the "temporary" adapter has survived three reorganizations and should not gain a new public method. It does not know that the fastest fix will create a support burden for the one engineer who understands the billing job and is already held together by espresso and spite.</p>
+
+    <p>The architecture failure comes from flattening different review concerns into one AI verdict. A comment about a missing test is not the same kind of thing as a warning about a cross-service dependency. A suggestion about variable names is not the same kind of thing as a privacy concern. When all of these appear as equal little annotations, teams start treating risk like unread email.</p>
+
+    <p>There is also an incentive problem. Bots are rewarded for speaking. Silence looks like absence. A reviewer that says "I found nothing" feels less valuable than one that produces a scroll of suggestions, even if half of them are garnish. So the system learns to be present. It becomes the office microwave of governance: always humming, occasionally useful, vaguely suspicious.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat AI review as evidence collection, not authority. The bot can inspect, summarize, compare, and ask. It should not approve. It should not be the only required reviewer. It should not turn a dangerous change into a safe one by existing near it.</p>
+
+    <p>Split the work into layers. Deterministic checks handle formatting, lint, type errors, license headers, dependency rules, generated files, and test execution. Do not ask a language model to cosplay as a compiler with opinions. Review assistance handles local reasoning: suspicious branches, missing edge cases, strange deletions, inconsistent naming, test gaps, and likely regressions. Policy checks handle rules the organization can state: no new public endpoints without auth notes, no customer data in logs, no schema migration without rollback. Human review handles intent, tradeoffs, ownership, and risk acceptance.</p>
+
+    <p>Make the bot cite its evidence. A good AI comment should point to the exact lines, name the assumption, describe the failure mode, and offer a small verification step. "This may break pagination" is weak. "This changes the default limit from 100 to 20 in the admin export path; verify the downstream report job does not assume 100 rows per page" is useful. It gives the author a way to answer instead of merely absorb vibes.</p>
+
+    <p>Add escalation rules. If the bot flags security, data loss, migration risk, money movement, permissions, or cross-service contracts, the result should route to the right human owner. If the bot is unsure, that uncertainty should be visible. Confidence without calibration is just cologne on a raccoon.</p>
+
+    <p>Track outcomes, not comment volume. Measure how often AI review finds issues humans accept, how often accepted comments prevent defects, how often comments are dismissed, and which categories create noise. Review the reviewer. If a bot keeps nagging about harmless style while missing auth drift, tune it or put it outside for a while.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Does the bot provide evidence and a verification step, or does it merely sound concerned?</li>
+      <li>Are deterministic checks handled by deterministic tools before the model speaks?</li>
+      <li>Can high-risk findings route to named human owners?</li>
+      <li>Do human approvals still carry responsibility after the AI check passes?</li>
+      <li>Are you measuring accepted useful findings, or just counting comment confetti?</li>
+    </ul>
+
+    <p>If the answers are mostly no, the bot is not reviewing code. It is decorating the pull request with plausible supervision. That may feel better than doing nothing, the way putting a helmet on a toaster feels better if you are committed to the bit.</p>
+
+    <p>Use AI reviewers. Let them be tireless, picky, and occasionally weird. Just keep the authority where it belongs: with checks that can prove things, owners who can accept risk, and humans who know why the code exists. Otherwise the merge button gets a ceremonial fart cloud and calls it governance.</p>
+
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
