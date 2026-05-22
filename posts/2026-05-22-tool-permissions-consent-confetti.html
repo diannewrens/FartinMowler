@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tool permissions and the smell of consent confetti - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI agent tool permissions, approval fatigue, scoped capabilities, audit trails, and why consent popups are not a security model." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 22, 2026</p>
+    <h1>Tool permissions and the smell of consent confetti</h1>
+
+    <p>Every agent platform eventually discovers buttons. The agent wants to read a file. Approve? It wants to run a command. Approve? It wants to call a calendar API, open a browser, send a message, write a branch, summarize a secret it definitely should not have seen. Approve, approve, approve. Security has arrived wearing a party hat and firing checkboxes into the air.</p>
+
+    <p>Permission prompts are not useless. A prompt can stop a bad action. It can slow down a confused model. It can give a human one last chance to notice that the agent is about to delete the wrong database with the serene confidence of a raccoon in a lab coat.</p>
+
+    <p>The problem starts when prompts become the architecture. If every dangerous choice is delegated to a tired person clicking through a queue, you have not built a permission system. You have built consent confetti.</p>
+
+    <blockquote>
+      <p>A popup is a speed bump. It is not a gate, a map, or a memory of who owns the keys.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Agent tools need scoped capabilities, not a pile of yes/no prompts.</li>
+        <li>The smell appears when every action asks for approval but no policy explains what should be allowed.</li>
+        <li>Users get tired. Tired users approve nonsense with excellent posture.</li>
+        <li>Design permissions around task intent, resource boundaries, risk tiers, and audit receipts.</li>
+        <li>If the only defense is "the human clicked approve," the fart is already in the ventilation system.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The consent confetti smell appears when an AI agent has access to useful tools but the security model is mostly interrupting the user. The agent asks before reading each file, calling each API, editing each document, or touching each environment. At first this feels responsible. Look at all the explicit consent. Look at the many tiny ceremonies.</p>
+
+    <p>Then the work starts. The user approves five harmless reads. The sixth prompt looks the same but includes a private key path. The seventh prompt is a shell command with a line wrap hiding the sharp end. The eighth asks to post a message to a real customer channel because the agent misread a draft as an instruction. The user is already in flow, or late for a meeting, or trying to get the machine to finish the thing it promised it could do. Click.</p>
+
+    <p>This is how approval becomes wallpaper. The system produces visible consent, but not meaningful consent. It records that someone clicked yes, which is useful later in the same way a restaurant receipt is useful after food poisoning. It proves a transaction happened. It does not prove dinner was a good idea.</p>
+
+    <p>The smell is especially bad in developer tools because the actions look technical enough to intimidate the person approving them. A model proposes a command. The prompt shows the command. The human sees familiar words, maybe "npm" and "test" and "fix," then approves. The command also curls a script, exports a token, or writes into a directory that should have been read only. The popup did its job by asking. The architecture failed by asking the wrong question.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Agent platforms want broad usefulness. Broad usefulness requires tools. Tools require authority. Authority requires boundaries. Boundaries are annoying, so teams reach for prompts because prompts are easy to demo. The model asks. The user approves. The action runs. Everyone can point to a consent event in the log and feel unusually adult.</p>
+
+    <p>The hidden problem is that tool use is not one risk. Reading a public README is not the same as reading an env file. Creating a branch is not the same as pushing to main. Searching a calendar is not the same as inviting a customer. Sending a draft to Slack is not the same as sending it to a production incident channel during an outage. A flat approval prompt turns all of these into the same shape: allow or deny.</p>
+
+    <p>Models also compose actions in ways humans do not review naturally. A single task can require dozens of small tool calls. Each individual call may look tolerable. The sequence can still be dangerous. Read config, infer environment, edit script, run command, upload artifact, notify channel. Nothing in that chain screams until the chain is complete and the artifact contains something regrettable.</p>
+
+    <p>There is an ownership gap too. The person approving the action may not own the resource. They may not know the data class, retention rule, customer impact, or blast radius. The platform asks the nearest human because the nearest human is available. Availability is not authority. This is how organizations accidentally promote whoever is awake to acting governor of the tool swamp.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Use task-scoped capability envelopes. Before the agent starts, define what job it is doing, which resources it may touch, which tools it may call, and what actions require escalation. The envelope should be specific enough to be boring: read files under <code>src/</code>, write only on a new branch, run tests, open a pull request, never read <code>.env</code>, never send external messages, never change deployment settings. Boring is good. Boring is how security avoids becoming interpretive dance.</p>
+
+    <p>Separate permissions by resource, action, and risk. Read, write, execute, publish, spend money, change identity, and contact humans are different verbs. Treat them differently. A code search tool may be safe for repository text and unsafe for secrets. A browser tool may be safe for documentation and unsafe for authenticated admin screens. A messaging tool may be safe for drafts and unsafe for delivery. The tool name alone is not the boundary.</p>
+
+    <p>Make policies inspectable by humans and enforceable by machines. "Ask before dangerous actions" is not a policy. "Require named owner approval before writing to production config" is closer. "Block secret paths regardless of user approval" is better. Some actions should not have an approve button at all. The cleanest security decision is the one the user never has to make because the system already knows it is out of scope.</p>
+
+    <p>Use progressive trust, but make it earned and revocable. A local formatting agent can get more freedom than an agent browsing arbitrary websites. A repeatable release assistant with a narrow script can get more freedom than a chatty generalist with a tool buffet. Trust should follow evidence: successful runs, stable inputs, limited outputs, known owners, audited changes. It should also expire. Yesterday's safe automation becomes tomorrow's haunted forklift if nobody revisits the boundary.</p>
+
+    <p>Keep receipts that explain intent, not just clicks. Log the task, policy envelope, tool call, resource, actor, approval reason, result, and diff where possible. A useful audit trail lets someone reconstruct why the agent believed an action was allowed. "User approved at 14:03" is thin gruel. "Task envelope allowed branch write; policy blocked env read; owner approved external draft send with ticket link" is food.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can you describe what the agent is allowed to do without naming individual popups?</li>
+      <li>Are some actions blocked even if a user clicks approve?</li>
+      <li>Does approval route to the resource owner when the action has real blast radius?</li>
+      <li>Can the audit log show the task intent, policy, action, and result?</li>
+      <li>Would a tired user approving ten prompts in a row still be protected from the worst mistake?</li>
+    </ul>
+
+    <p>If the answer is no, the permission model is mostly theater with modal dialogs. It may reduce liability. It may create a comforting paper trail. It will not save the system from a model that is wrong in small steps.</p>
+
+    <p>Prompts are fine as a last-mile confirmation. They are terrible as the main load-bearing beam. Build the envelope. Name the owner. Block the obvious badness. Log the reason. Then let the agent work inside a pen sturdy enough that nobody has to chase it through the parking lot with a clipboard.</p>
+
+    <a class="back" href="../">← Back to the front page</a>
+  </article>
+</body>
+</html>
