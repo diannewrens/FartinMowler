@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent evals and the smell of benchmark cosplay - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on agent evaluation suites, benchmark cosplay, task harnesses, production traces, and why passing the obstacle course is not the same as operating the warehouse." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 24, 2026</p>
+    <h1>Agent evals and the smell of benchmark cosplay</h1>
+
+    <p>Agent evals have entered their theater-kid era. Every team now wants a harness, a scorecard, a leaderboard, and a proud little chart proving that the agent can book a meeting, edit a file, call three tools, and apologize to nobody. This is progress. It is also how a demo puts on a safety vest and starts calling itself operations.</p>
+
+    <p>I want evals. Without them, agent work becomes vibes with a CI badge. The problem starts when the eval suite measures a miniature obstacle course while production is a loading dock full of missing labels, stale credentials, partial failures, human impatience, and one spreadsheet named final_final_use_this_one.xlsx.</p>
+
+    <blockquote>
+      <p>An eval is a question you ask the system repeatedly. If the question is fake, the confidence is fake with better posture.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Agent evals are useful when they model real work, real tools, and real failure costs.</li>
+        <li>The smell appears when teams optimize for a tidy benchmark instead of the messy task boundary users actually need.</li>
+        <li>Good evals include traces, refusal cases, recovery paths, and boring operational constraints.</li>
+        <li>A leaderboard can compare models. It cannot tell you whether your workflow is safe to delegate.</li>
+        <li>If the eval never has to wait, retry, ask, or stop, it is testing a petting zoo agent.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>Benchmark cosplay happens when an agent team builds an evaluation suite that looks rigorous from across the conference room but does not resemble the production job. The tasks are clean. The tools are obedient. The expected answers are crisp. The agent wins points for finishing, not for knowing when finishing would be stupid.</p>
+
+    <p>You can smell it in the test names. "Schedule customer follow-up" becomes a single calendar call with perfect attendee names. "Fix failing test" becomes a repo with one obvious syntax error and no flaky setup. "Research vendor options" becomes three static documents and a rubric that rewards summary length. The harness is not lying. It is just cosplaying as the world.</p>
+
+    <p>The most dangerous version is the aggregate score. The agent gets 84%. Everyone relaxes. But the failed 16% includes the authorization edge case, the file deletion mistake, and the moment where the model should have asked the human for a missing policy decision. Average scores are where sharp risks go to wear beige.</p>
+
+    <p>Then the team tunes against the suite. Prompts grow barnacles. Tool descriptions become exam prep. The agent learns the local rituals of the harness: always call search first, always produce JSON, always use the happy path because the fixture rarely bites. Eventually the eval is not measuring capability. It is measuring whether the agent has memorized the room's preferred dance steps.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Agent behavior is hard to evaluate because agents are not just text generators. They choose actions, call tools, recover from errors, spend money, touch state, and sometimes produce consequences that do not fit inside a neat expected string. A chat eval can compare an answer to a reference. An agent eval has to ask whether the path was acceptable, whether the side effects were allowed, and whether the agent stopped before making the mess larger.</p>
+
+    <p>Teams reach for tidy tasks because tidy tasks are shippable. They run in CI. They make graphs. They do not require permission from finance, legal, support, or the grumpy platform engineer who knows why staging calendar data is cursed. Synthetic tasks also feel fair. Every model sees the same maze. That is useful for comparison, but production does not care about fair. Production cares that the invoice was not sent twice.</p>
+
+    <p>There is also a measurement trap. We prefer numbers that move quickly. Success rate moves quickly. Mean steps to completion moves quickly. Human trust, policy fit, cost of recovery, and blast radius move like furniture through a narrow hallway. They are awkward to measure, so they get moved to a later phase, which is where important architecture decisions go to become folklore.</p>
+
+    <p>Tooling makes the smell stronger. Once a harness exists, it wants cases. People add easy cases because empty dashboards look guilty. Soon the suite has breadth without teeth: thirty tasks for summarizing, five for form filling, one for permissions, zero for partial rollback. It feels comprehensive because it is wide. A puddle is also wide. Try not to drown your governance in it.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Use trace-first evals. Start from production or pilot traces, not from what would look nice in a demo. Capture the user request, available context, tool calls, intermediate decisions, failures, human interventions, final result, and cleanup. Redact what needs redacting, then turn the trace into a repeatable case. The trace is not sacred, but it keeps the eval anchored to work that actually happened.</p>
+
+    <p>Separate task success from operational behavior. A case should score whether the agent completed the job, but also whether it used approved tools, stayed within scope, handled uncertainty, preserved state, and produced a receipt a human can audit. Give these dimensions names. Otherwise one shiny success score will hide the fact that the agent solved the task by kicking a door off its hinges.</p>
+
+    <p>Add refusal and escalation cases on purpose. The agent should sometimes say no. It should sometimes ask for a missing input. It should sometimes stop because the requested action crosses a policy boundary. These are not failures. They are the brakes. A car evaluated only by forward motion will do very well until the first wall demonstrates a competing benchmark.</p>
+
+    <p>Make side effects testable. Use sandboxes with realistic state, not toy tools that always succeed. Seed messy calendars, duplicate records, expired tokens, rate limits, partial outages, and documents with conflicting facts. Then check the state after the run. Did the agent leave a draft instead of sending? Did it create one ticket or four? Did it record why it escalated? The smell goes down when the eval inspects the room after the agent leaves.</p>
+
+    <p>Keep a small golden suite and a larger rotating swamp. The golden suite protects known requirements and regressions. The swamp is where you sample fresh traces, weird edge cases, and failures from last week. If every case is permanent, the agent and the team will adapt to the wallpaper. Rotating cases keep the system honest and mildly annoyed, which is the correct emotional state for evaluation.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Did this eval come from a real task, incident, support ticket, or trace?</li>
+      <li>Does the score separate completion from policy, cost, side effects, and recovery?</li>
+      <li>Can the agent pass by taking an action no human owner would approve?</li>
+      <li>Does at least one case reward stopping, asking, or escalating?</li>
+      <li>After the run, do you inspect changed state instead of only reading the final answer?</li>
+    </ul>
+
+    <p>Agent evals should be less like talent shows and more like building inspections. Bring the clipboard. Check the wiring. Flush the toilet twice. If the benchmark only proves the agent can smile under stage lights, do not be shocked when production smells like a rented costume after rain.</p>
+
+    <a class="back" href="../">Back to field notes</a>
+  </article>
+</body>
+</html>
