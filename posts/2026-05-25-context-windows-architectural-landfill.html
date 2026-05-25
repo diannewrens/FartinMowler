@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Context windows and the smell of architectural landfill - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on giant context windows, repo stuffing, architectural landfill, context budgets, and why more tokens are not a substitute for boundaries." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 25, 2026</p>
+    <h1>Context windows and the smell of architectural landfill</h1>
+
+    <p>The new flex is a context window large enough to swallow your repo, your issue tracker, three RFCs, the entire design system, and a Slack export nobody has read since the reorg. The agent smiles, accepts the dump, and produces a plan with the confidence of a raccoon in a server room.</p>
+
+    <p>Bigger context windows are genuinely useful. They let models hold more code, compare more documents, and avoid some of the weird amnesia that made early assistants feel like interns with a concussion. But every capacity increase invites an architectural sin: instead of deciding what matters, we shovel everything into the prompt and call the pile intelligence.</p>
+
+    <blockquote>
+      <p>A large context window is storage, not judgment. If you fill it with garbage, you have built a very expensive garbage-aware system.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Large context windows reduce retrieval pain, but they do not remove the need for selection.</li>
+        <li>The smell appears when teams treat "send the whole repo" as an architecture strategy.</li>
+        <li>Good systems use context budgets, source labels, recency rules, and task-specific bundles.</li>
+        <li>More tokens can make wrong context more persuasive, which is a rude little trick.</li>
+        <li>If nobody can explain why a document entered the prompt, the prompt is already a landfill.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>Architectural landfill happens when an AI workflow depends on dumping broad, weakly sorted context into a model because nobody wants to define the task boundary. The team starts with a reasonable goal: give the assistant enough information to work. Then the input grows. All source files. All tickets. All docs. Old docs too, just in case. Some previous chats, because maybe the model needs the vibe. Soon the prompt contains a compact history of organizational indecision.</p>
+
+    <p>You can smell it in the interface copy. "Attach your entire workspace." "Index everything." "Let the agent reason over all company knowledge." Fine words. Also how you get a model answering a billing question with a deprecated pricing memo from eighteen months ago and a TODO from a branch called experimental-new-new-flow.</p>
+
+    <p>The failure mode is not always obvious. The assistant may produce a decent answer. That is what makes the smell clingy. A large pile often contains the right fact somewhere, along with four stale facts, two contradictory conventions, and a meeting note where someone proposed the opposite thing before lunch. The model has to decide which bits matter, but the system has already abdicated its responsibility to make that decision visible.</p>
+
+    <p>Then context becomes a superstition. The agent failed? Add more files. It hallucinated an API? Add the docs. It used an old pattern? Add the migration guide. After a few rounds, nobody knows whether the system improved because the right evidence was added or because the model happened to step around the compost heap this time.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Context selection is product work wearing a backend hoodie. It requires knowing the user's task, the code ownership map, the freshness of documents, the risk of the action, and which sources beat which other sources when they disagree. That is harder than raising a token limit. So teams take the convenient path. They make the pipe wider.</p>
+
+    <p>Large windows also blur two jobs that should stay separate. Retrieval finds candidates. Context assembly decides what enters the model's working memory for this task. Those are not the same thing. A search index can return twenty plausible files. The assembler should decide that only four belong in the prompt, with labels saying where they came from and why they matter. Without that second step, retrieval becomes a leaf blower pointed at the model.</p>
+
+    <p>There is a second trap: long context feels like transparency because the evidence is technically present. In practice, humans cannot audit a 600-page prompt. The model may cite the right source, ignore a stronger one, or blend several into a smooth paste. The more material you stuff in, the easier it gets for a wrong answer to sound well read.</p>
+
+    <p>Software architecture adds its own stink. Real systems contain fossils. Deprecated classes remain because removing them would wake the billing dragon. README files lie politely. Tests describe behavior that product no longer wants. Architecture docs trail reality by one incident. A model reading the whole repo does not automatically know which artifacts are living tissue and which are bone.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Use context budgets. Treat tokens like latency, memory, or cash. Each workflow gets a budget based on task type and risk. A small bug fix may need the failing test, the touched files, nearby interfaces, and the relevant issue. A migration plan may need ADRs, dependency graphs, rollout notes, and operational constraints. The budget forces a useful question: what evidence would a competent human actually want before acting?</p>
+
+    <p>Build task-specific context bundles instead of workspace dumpsters. A bundle should include source labels, timestamps, ownership, confidence, and a reason for inclusion. "Selected because this file defines the public API used by the failing test" is useful. "Selected because it matched three words" is less useful, though still better than a mystery sandwich.</p>
+
+    <p>Give sources precedence rules. Current production code beats stale docs. Accepted ADRs beat meeting notes. Runtime traces beat hopeful comments. User-provided instructions beat generic style advice, unless policy says otherwise. Write these rules down and expose them in traces. If the model used an old document, you should be able to see whether the assembler knew it was old or just found it under the couch.</p>
+
+    <p>Keep a negative context list. Some artifacts should rarely enter the prompt: generated files, vendored dependencies, archived specs, obsolete migrations, old incident drafts, and experiments with names that sound like a raccoon made a branch at 2 a.m. Excluding junk is not censorship. It is housekeeping. A clean shop floor is not less informed because it lacks last week's sandwich.</p>
+
+    <p>Finally, make the agent ask for missing context instead of rewarding it for eating the building. If the assistant cannot identify the service boundary, owner, policy, or current rollout state, it should ask or stop. Silence plus a million tokens is still silence. It just costs more.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can you name why each major document or file entered the prompt?</li>
+      <li>Does the system label source age, owner, and confidence before the model sees it?</li>
+      <li>Are deprecated or generated artifacts excluded by default?</li>
+      <li>When sources conflict, does the assembler apply visible precedence rules?</li>
+      <li>Would a smaller, sharper context bundle give the same answer with less risk?</li>
+    </ul>
+
+    <p>Large context windows are a nice warehouse. They are not a janitor, librarian, architect, or adult supervision. Use the space. Label the shelves. Take out the trash before the model starts treating it like heritage data.</p>
+
+    <a class="back" href="../">Back to field notes</a>
+  </article>
+</body>
+</html>
