@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spec files and the smell of executable wishful thinking - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI coding specs, plan files, task manifests, executable wishful thinking, and why agents need contracts instead of vibes in markdown." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 26, 2026</p>
+    <h1>Spec files and the smell of executable wishful thinking</h1>
+
+    <p>The fashionable move now is to give the coding agent a spec file. Not a ticket, not a conversation, not a half-remembered meeting note. A proper markdown rectangle with goals, constraints, acceptance criteria, and enough ceremonial indentation to make the whole thing feel like engineering has returned from lunch.</p>
+
+    <p>This is mostly good. Specs beat vibes. A written plan beats a chat scroll full of accidental requirements and someone saying "make it cleaner" with the authority of a haunted throw pillow. But the smell begins when the spec becomes executable wishful thinking: a document that looks precise enough for an agent to obey, while hiding the parts a human would normally challenge.</p>
+
+    <blockquote>
+      <p>A spec is not a tiny product manager. It is a boundary object. If the boundary is mush, the object is just a scented candle for ambiguity.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>AI coding specs are useful because they make intent visible before the agent starts editing.</li>
+        <li>The smell appears when teams treat a nice markdown file as a contract without checking whether it is testable, current, or owned.</li>
+        <li>Good specs separate goals, non-goals, invariants, risks, acceptance tests, and rollback rules.</li>
+        <li>If an agent can complete the spec while still disappointing the user, the spec is decorative upholstery.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>Executable wishful thinking shows up as a spec that sounds decisive but cannot be verified. It says the agent should "improve onboarding," "modernize the billing flow," or "refactor authentication for clarity." These are not instructions. They are weather reports with bullet points.</p>
+
+    <p>The agent does what agents do. It turns the words into a plausible sequence of edits. It renames files, extracts helpers, adds a loading state, changes a route, updates two tests that already agreed with the old behavior, and proudly declares the work complete. Everyone stares at the pull request. The diff is large enough to look valuable and vague enough to be hard to reject. Somewhere, a product requirement quietly dies behind a modal.</p>
+
+    <p>The smell is strongest when the spec has the shape of rigor without the cost of rigor. There are headings. There is a checklist. There may even be a table, because nothing says "we know what we are doing" like a table nobody wants to maintain. But the hard parts are missing. Who owns the decision? Which behavior must not change? What data shape is canonical? What failure is acceptable? Which test proves the user can do the thing? What should the agent refuse to touch?</p>
+
+    <p>Without those pieces, the spec mostly tells the agent how confident to sound.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Teams reach for specs because chat is too slippery. That instinct is correct. A prompt in a conversation is a wet napkin. A spec in the repo can be reviewed, versioned, linked from an issue, and read by the next poor creature who has to explain why the agent installed a second date library.</p>
+
+    <p>The trouble is that many teams copy the surface area of software design without copying the accountability. A human engineer reads a fuzzy ticket and asks annoying questions. "What happens to existing customers?" "Is this behind a flag?" "Can support see the new state?" "Are we allowed to store that?" An agent may ask some of those if prompted, but it has been trained by the entire internet to be helpful first and suspicious later. Helpful first is how you get polite damage.</p>
+
+    <p>Specs also become stale quickly. The plan file says the endpoint returns one shape. The code returns another. The design says three states. Production has five, including one invented during an incident and named with the emotional restraint of a raccoon chewing an ethernet cable. If the agent treats the spec as fresher than the system, it may faithfully implement yesterday's fantasy.</p>
+
+    <p>There is another trap: acceptance criteria often describe tasks, not outcomes. "Add validation." "Update the component." "Write tests." That proves activity happened. It does not prove the right user can complete the right workflow under the right constraints. Agents are excellent at satisfying task-shaped checkboxes. They are less reliable at noticing that the checklist never asked for the business result.</p>
+
+    <p>Finally, spec files make responsibility look distributed. Product wrote the goal. Engineering added constraints. The agent made the patch. Reviewers skimmed the diff. When the feature lands sideways, everyone can point at the markdown and say they followed the process. This is process as air freshener. It does not remove the smell. It gives it a brand strategy.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Use agent specs as contracts with receipts, not wishes with headings. Start with a short problem statement in plain language. Then separate the document into fields the system can check and humans can argue about: goal, non-goals, invariants, affected surfaces, source of truth, acceptance tests, risks, rollout, rollback, and explicit no-touch zones.</p>
+
+    <p>The no-touch section matters more than people expect. Agents often create trouble by being broadly helpful. A billing copy change becomes a pricing model refactor. A CSS cleanup becomes a design system fork. A migration script gains opinions about user identity. The spec should say what is out of bounds. "Do not change API semantics." "Do not rewrite the auth middleware." "Do not add dependencies." This sounds boring because boundaries are boring. So are seatbelts. Wear one anyway.</p>
+
+    <p>Make acceptance criteria executable where possible. Link to tests that must pass. Name the workflow that must be demonstrated. Include sample inputs and outputs. If the agent changes behavior, require a before-and-after note. If it touches a risky area, require a rollback path. The goal is not to drown the work in paperwork. The goal is to turn hidden assumptions into visible tripwires.</p>
+
+    <p>Add a freshness rule. A spec should declare which sources beat which other sources. Current code may beat the design doc. A signed-off API contract may beat the current client implementation. A regulatory constraint may beat both, because regulators have terrible UX but excellent enforcement. When sources conflict, the agent should stop and report the conflict instead of blending them into a smoothie of compliance-flavored nonsense.</p>
+
+    <p>Give the agent a question phase. Before editing, it should list missing facts, contradictions, and risky assumptions. For small changes, that list may be empty. Fine. For anything touching money, identity, privacy, data deletion, permissions, or public APIs, silence should be suspicious. The first output should not be code. It should be a map of where the spec is strong and where it is wearing a fake mustache.</p>
+
+    <p>Review the spec before reviewing the diff. If the spec was bad, the pull request cannot be good in any meaningful sense. It can be clever. It can compile. It can even pass tests. But passing tests against a rotten spec is just automation laundering your confusion at machine speed.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can a reviewer tell what behavior must not change?</li>
+      <li>Does the spec name the source of truth when code, docs, and tickets disagree?</li>
+      <li>Are acceptance criteria written as observable outcomes, not chores?</li>
+      <li>Does the agent have permission to ask questions before editing?</li>
+      <li>If the change fails in production, does the spec explain how to back out?</li>
+    </ul>
+
+    <p>Spec files are a healthy correction to prompt soup. Keep them. Just do not confuse a well-formatted wish with a design decision. Markdown can hold a contract, but it can also hold a fart in a nice little jar.</p>
+
+    <a class="back" href="../">Back to field notes</a>
+  </article>
+</body>
+</html>
