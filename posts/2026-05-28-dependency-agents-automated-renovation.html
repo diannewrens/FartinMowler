@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dependency agents and the smell of automated renovation - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI dependency upgrade agents, automated remediation, supply chain risk, lockfiles, and why every bot with a broom eventually finds plumbing." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 28, 2026</p>
+    <h1>Dependency agents and the smell of automated renovation</h1>
+
+    <p>The new supply chain dream is a dependency agent that notices stale packages, reads the release notes, opens the upgrade pull request, fixes the broken tests, and leaves everyone free to do strategy, gardening, or whatever managers think engineers do when not arguing with YAML.</p>
+
+    <p>This is a reasonable dream. Dependency work is repetitive, thankless, and always late. A bot that can reduce the backlog is useful. The smell begins when automated renovation starts treating every dependency change as a tidy maintenance chore, as if bumping a package version were closer to changing an air filter than replacing a load-bearing wall while the restaurant is open.</p>
+
+    <blockquote>
+      <p>A dependency agent is not a janitor. It is a small contractor with access to the basement and a suspicious amount of confidence about wiring.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Dependency agents are useful for boring version bumps, stale lockfiles, and known security fixes.</li>
+        <li>The smell appears when the bot is allowed to merge semantic change because the diff looks mechanical.</li>
+        <li>Good systems route upgrades by blast radius, not by whether the changelog contains the word "patch."</li>
+        <li>If a bot can change the build graph without a human knowing which behavior changed, the house is being renovated from inside the walls.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>Automated renovation has a very comforting shape. A pull request appears. The title says it updates a package from 4.2.1 to 4.2.2. The body lists commits, vulnerabilities, release notes, and a green checkmark parade. The agent has adjusted an import, regenerated the lockfile, fixed a type error, and maybe rewritten one test. It looks like diligence. It smells like nobody read the manual.</p>
+
+    <p>The dangerous part is not that agents upgrade dependencies. Humans have been doing that badly for years, usually in a Friday afternoon bundle called "chore: update deps" because we apparently enjoy making incident review harder. The dangerous part is that the agent can make a risky change look cleaner than it is. It can smooth the diff. It can translate a breaking API into new code. It can make the tests pass by accommodating the new behavior, which is not the same thing as proving the old promises still hold.</p>
+
+    <p>This smell shows up in dependency pull requests where every signal is local. Does it compile? Yes. Do unit tests pass? Yes. Did the agent summarize the changelog? With the solemn authority of a wedding officiant. But nobody asked whether the package is in the request path, whether its defaults changed, whether the transitive dependency added a native binary, whether the license changed, whether the package now phones home, or whether the fix quietly widens permissions because security tooling likes to solve one fire by installing another candle.</p>
+
+    <p>Lockfiles make the smell worse because they look factual. They are factual, but only about selection. They do not explain intent. A lockfile can tell you the exact tarball. It cannot tell you why that tarball is acceptable in a payment service, an offline desktop app, or a training pipeline that still runs on a GPU box named after someone's dog.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Dependency work sits in the worst possible corner of engineering attention. It is important enough to be mandatory and boring enough to be postponed. Security scanners create queues. Frameworks age. Package managers complain. Build systems develop folklore. Eventually the backlog becomes a smell swamp, and someone says the magic words: "Can an agent just handle this?"</p>
+
+    <p>Often, yes. Agents are good at the first mile. They can find release notes, apply codemods, fix imports, update snapshots, and discover that three test failures all come from the same renamed option. That is real value. Nobody becomes a better architect by manually renaming `withFoo` to `createFoo` across twelve files while whispering threats at TypeScript.</p>
+
+    <p>The second mile is where the bot starts wearing a fake mustache. Dependency changes are not one category. They are a pile of different risks sharing the same package manager UI. A dev-only lint upgrade is not an auth library upgrade. A patch release for a leaf package is not a major version change in the ORM. A vulnerability fix for a CLI tool is not the same as a crypto dependency in a service that signs customer data. Treating these as one workflow is architectural flatulence with a progress bar.</p>
+
+    <p>Release notes are also not contracts. They are marketing, archaeology, confession, and sometimes silence. A changelog may say "improved defaults" where it should say "your timeout behavior is different now, good luck." Agents can summarize what is written. They cannot reliably infer the weird production coupling that lives in your codebase, your traffic patterns, and the one dashboard nobody touches because it has been correct since 2019.</p>
+
+    <p>Finally, automated remediation creates social pressure. A green dependency PR feels rude to block. The bot did the work. The scanner is happy. The dashboard gets one fewer red badge. The reviewer has ten other things to do. So the change merges under the sacred banner of hygiene, and a week later someone discovers the hygiene included bleaching the sourdough starter.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat dependency agents as triage workers with tools, not trusted renovators with a master key. Start by routing upgrades into lanes. Low-risk lanes can move quickly: dev tools, documentation packages, type-only packages, test fixtures, and leaf libraries with no runtime path. Medium-risk lanes need owner review and focused smoke tests. High-risk lanes require explicit approval, rollout, and rollback. Put auth, payments, serialization, database drivers, network clients, crypto, telemetry, and package manager changes in the high-risk bin by default. The bin is ugly. That is why it works.</p>
+
+    <p>Make the agent produce a change card before it edits code. The card should name the package, direct and transitive dependents, runtime surfaces, known breaking changes, license or distribution changes, generated files touched, and tests that prove the old contract still works. If the agent cannot answer, that is not failure. That is the useful answer. "I do not know whether this package is in the login path" is far better than a confident lockfile diff with little shoes on.</p>
+
+    <p>Separate adaptation from verification. Let the agent make the code compile, but do not let that count as evidence. The verification should come from contract tests, integration tests, canaries, synthetic checks, or a manual workflow where the real behavior matters. If the agent updates tests, require it to explain whether each test preserves an old promise or blesses a new one. That single distinction removes a lot of fake cleanliness.</p>
+
+    <p>Use batch policy carefully. Bundling twenty upgrades saves review overhead and destroys causality. The better pattern is small safe batches for low-risk work and single-package changes for anything in the high-risk lane. Yes, this is slower. So is reading a medicine label. Speed is less impressive when the patient now has a second elbow.</p>
+
+    <p>Give the bot a boring merge contract. It may open PRs. It may fix mechanical breakage. It may label risk. It may request owners. It may not merge high-risk changes. It may not broaden permissions, add postinstall scripts, swap package managers, or accept new telemetry without a named human. If this sounds paranoid, congratulations, you have met software supply chains.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can a reviewer tell which runtime behavior might change, not just which version changed?</li>
+      <li>Is the upgrade routed by blast radius instead of semantic version vibes?</li>
+      <li>Did the agent preserve contract tests rather than update them to agree with the new library?</li>
+      <li>Would you still merge this if the green checks were replaced by one human saying "seems fine"?</li>
+      <li>If production breaks, can you identify and revert the exact dependency without spelunking through a mega-batch?</li>
+    </ul>
+
+    <p>Dependency agents are good. Use them. Just remember that renovation is not housekeeping. Sometimes the bot is sweeping. Sometimes it has opened the wall and found a pipe labeled "do not touch" in handwriting from the previous civilization. Sniff accordingly.</p>
+
+    <a class="back" href="../">Back to field notes</a>
+  </article>
+</body>
+</html>
