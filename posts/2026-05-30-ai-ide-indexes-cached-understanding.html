@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI IDE indexes and the smell of cached understanding - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI IDE indexes, repo maps, embeddings, stale symbols, generated code navigation, and why cached understanding is not architecture knowledge." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · May 30, 2026</p>
+    <h1>AI IDE indexes and the smell of cached understanding</h1>
+
+    <p>The modern AI IDE wants to know your repository. Not just open files. Not just symbols. The whole thing: imports, tests, docs, recent commits, embeddings, dependency graphs, blame hints, style rules, and the little fossil layer of comments that says "temporary" from three reorgs ago.</p>
+
+    <p>This is useful. A coding assistant that can see the shape of the codebase is better than one guessing from the current tab like a raccoon reading a restaurant menu through a window. The smell starts when the IDE's index becomes a private architecture model that nobody audits, refreshes, scopes, or treats as fallible. Then the assistant is not pairing with your code. It is pairing with yesterday's rumor about your code.</p>
+
+    <blockquote>
+      <p>A repo index is a map. If the map updates slower than the territory, do not let it drive the excavator.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>AI IDE indexes are valuable when they help assistants find relevant files, APIs, tests, and conventions.</li>
+        <li>They get smelly when stale embeddings or symbol maps start passing for current architectural knowledge.</li>
+        <li>The fix is boring: freshness signals, source citations, scoped retrieval, invalidation rules, and tests that catch wrong assumptions.</li>
+        <li>If the assistant cannot tell you which version of the repo it thinks it understands, it does not understand the repo. It has vibes with a cache directory.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The first symptom is confidence. The assistant proposes a change across six files and explains that it follows the existing pattern. It names the service layer. It references the old validator. It imports a helper with the kind of calm authority usually reserved for people who have never run the test suite.</p>
+
+    <p>Then you look closer. The helper was deleted last week. The validator moved behind a feature flag. The "existing pattern" came from a migration shim that should not be copied into new code. The generated patch compiles after two small fixes, which makes the whole thing more dangerous. Wrong code that obviously explodes is a gift. Wrong code that smells faintly like the codebase is how teams adopt ghosts.</p>
+
+    <p>This is cached understanding. The IDE has an index. The agent has snippets. The prompt has retrieved examples. Together they produce the emotional texture of expertise. But architecture is not texture. Architecture is the current set of boundaries, contracts, failure modes, ownership rules, and tradeoffs that make the software behave under pressure. Some of that is in code. Some of it is in tests. Some of it is in docs. Some of it is in the scar tissue nobody indexed because it lives in incident reviews and the face your platform lead makes when someone says "just add a wrapper."</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Code search used to be humble. You asked for a symbol, got a list of files, and decided what mattered. AI IDEs add a middle layer that decides relevance before you see it. That layer may combine lexical search, embeddings, language server data, dependency graphs, open buffers, recent edits, and whatever proprietary spice the vendor sprinkled into the stew. The result feels like context, but it is really a ranking system wearing a cardigan.</p>
+
+    <p>Ranking systems age. A branch changes. Generated files appear. A package boundary moves. A migration removes the path the assistant learned from. A mono repo holds five applications with similar names and different rules. The index may refresh eventually, but "eventually" is not an architectural guarantee. If the assistant retrieves an old implementation because it has high semantic similarity, it can reproduce the exact pattern the team just escaped. Congratulations, you have invented regression with good posture.</p>
+
+    <p>There is a second problem: missing negative knowledge. Indexes are good at finding examples of what exists. They are worse at knowing what must not be copied. The codebase often contains deprecated APIs, compatibility adapters, old auth flows, temporary forks, flaky tests, generated clients, and vendor patches. Humans learn to treat these areas like suspicious leftovers in the back of the fridge. An assistant sees examples. The smell becomes strongest when the repo contains both the desired pattern and the old forbidden one, and the old one has better names.</p>
+
+    <p>Generated code makes it worse. AI tools create more files, more near duplicates, more local conventions, and more helper abstractions that look intentional because they are formatted. The next assistant indexes that output and treats it as precedent. Now the system has a memory of its own droppings. This is not always bad. Sometimes generated scaffolding becomes real architecture. But it needs promotion, review, and ownership, not automatic canonization by an embedding job with no shame gland.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat the IDE index as an evidence source, not an oracle. Every retrieved file should carry provenance: path, commit or timestamp, branch, whether it is generated, whether it is deprecated, and why it was selected. If the assistant cites a pattern, it should point to the files and tests that define that pattern. "This matches the existing style" is not enough. Existing where? Current as of when? Owned by whom? Blessed by what test?</p>
+
+    <p>Add freshness to the workflow. The assistant should know when the index is stale relative to the working tree. If files changed, dependencies updated, or the branch diverged, retrieval needs to say so. For risky edits, force a refresh or fall back to direct file reads. This sounds annoying until you compare it with reviewing a beautiful patch built on a deleted abstraction. A little friction at selection time beats a large fart at merge time.</p>
+
+    <p>Mark dangerous examples. Deprecated directories, generated clients, compatibility layers, fixtures, experiments, and old migrations need machine readable labels. A human warning in a README may help a human. It will not reliably stop a retrieval system from grabbing the wrong thing. Put the warning where the tool can consume it: metadata files, lint rules, codeowners, path policies, or explicit retrieval exclusions. If an assistant can read your entire repo but cannot tell the difference between a pattern and a museum exhibit, narrow its diet.</p>
+
+    <p>Keep architecture decisions outside the index fog. Short ADRs, boundary docs, package rules, and test names give the assistant better handles than folklore. Do not write essays for the machine. Write small, specific constraints humans also want: "new billing writes go through BillingCommandGateway," "do not import legacy-auth in new code," "orders owns refund state," "generated clients are not style examples." The goal is not more documentation perfume. The goal is fewer plausible lies.</p>
+
+    <p>Finally, review generated changes for assumption drift. Ask what the patch believed about the system. Which API did it think was current? Which directory did it treat as canonical? Which tests did it assume covered the behavior? This moves review from line polishing to model checking, in the plain old engineering sense. You are not grading the assistant's prose. You are checking the map against the territory before someone pours concrete.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can the assistant show the exact files, commits, and tests behind the pattern it claims to follow?</li>
+      <li>Does the index know which paths are deprecated, generated, experimental, or forbidden as examples?</li>
+      <li>Will retrieval warn when the working tree or branch is newer than the index?</li>
+      <li>Can reviewers see the assumptions behind a generated patch, not just the diff?</li>
+      <li>If an old implementation has better names than the new one, will the assistant still choose correctly?</li>
+    </ul>
+
+    <p>AI IDE indexes are worth having. They make assistants less blind, which is polite. But cached understanding is still cached. Refresh the map, label the swamp, and do not let yesterday's architecture toot confidently into tomorrow's pull request.</p>
+
+    <a class="back" href="../">Back to field notes</a>
+  </article>
+</body>
+</html>
