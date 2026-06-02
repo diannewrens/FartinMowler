@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Incident copilots and the smell of auto-remediation theatre - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI incident copilots, runbooks, auto-remediation, observability context, escalation, and why confident incident narration is not operational control." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · June 2, 2026</p>
+    <h1>Incident copilots and the smell of auto-remediation theatre</h1>
+
+    <p>Incident copilots sound like mercy. The pager goes off, a model reads the alert, summarizes the last deploy, opens the dashboard, finds the suspect service, drafts a Slack update, and suggests the runbook step that will make the graph stop screaming. This is the sort of thing ops teams have wanted since the first human was asked to debug a database pool at 2:13 a.m. while wearing one sock.</p>
+
+    <p>The smell arrives when the assistant's summary starts passing for situation awareness and its button labeled "remediate" starts passing for operational control. The room gets calmer. The blast radius does not.</p>
+
+    <blockquote>
+      <p>An incident copilot should hand you the wrench. It should not sprint into the machine room because a log line looked emotionally available.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Incident copilots are useful for triage, context gathering, timeline building, and runbook retrieval.</li>
+        <li>They get dangerous when narration, confidence scores, and chat-friendly summaries replace ownership, authority, and rollback paths.</li>
+        <li>The fix is to separate read-only diagnosis from bounded actions, with explicit scopes, receipts, rate limits, and human escalation.</li>
+        <li>If the bot can restart production faster than it can explain who allowed it, you have automated panic in a nice cardigan.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The first version is harmless and genuinely useful. The copilot watches alerts. It gathers logs from the noisy service, recent deploys, feature flag changes, relevant dashboards, and yesterday's incident notes. It posts: "Error rate on checkout-api rose after deploy 8f3c2. Most failures are timeout errors from payments-gateway. Similar incident on May 11 was mitigated by reducing concurrency." Lovely. Nobody misses scrolling through five tabs while the channel fills with people asking if anyone has context.</p>
+
+    <p>Then the demo wants a second act. Summaries become recommendations. Recommendations become one-click actions. One-click actions become scheduled policies. Soon the assistant can rollback, scale, drain, pause jobs, rotate keys, and restart services because the vendor deck needed an arrow from "detect" to "resolve." The architecture now has an extremely confident intern with production credentials and no childhood memories of consequences.</p>
+
+    <p>This is auto-remediation theatre. The system performs the shape of incident response: it detects, explains, recommends, acts, and reports. Some of it may even be correct. The problem is that the hard parts of incidents are not the verbs. The hard parts are authority, uncertainty, coordination, and knowing which normal-looking fix will punch a different customer segment in the face.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Incidents are context problems, and models are good at making context feel assembled. They can compress a messy pile of logs, alerts, dashboards, tickets, and chat messages into a paragraph people can read under stress. That is valuable. A good summary can save minutes, and minutes matter when error budgets are evaporating like dignity in an all-hands demo.</p>
+
+    <p>But compression is not control. The model may see the latest deploy but not the migration still running in the background. It may see the runbook but not the tribal note that says, "Do not use this during invoice close." It may see that the CPU dropped after a restart last time and miss that the restart also flushed queues, delayed settlements, and created a charming little accounting swamp. Incident work is full of hidden coupling. Your dashboard does not always know where the bodies are stored.</p>
+
+    <p>The second trap is stale operational memory. Incident copilots learn from runbooks, previous postmortems, tickets, and chat history. That history is half documentation, half archaeology, and half people confidently typing guesses during a fire. Yes, that is three halves. Incidents do that to math. If you feed the assistant old mitigations without marking which ones are retired, risky, service-specific, or only safe below a traffic threshold, it will retrieve bad advice with beautiful formatting.</p>
+
+    <p>The third trap is authority laundering. A human says, "Maybe rollback?" The assistant says, "Recommended action: rollback checkout-api to previous stable version." The UI shows a green confidence pill. The recommendation now feels less like a hypothesis and more like a plan. Nobody wants to be the person slowing down the calm machine. So the team clicks the button, and later the postmortem says "we followed automated guidance," which is a fancy way of saying the fart wore a badge.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Start by drawing a hard line between reading and acting. Reading can be broad: logs, metrics, traces, deploy history, feature flags, tickets, runbooks, ownership metadata, and incident timelines. Acting should be narrow, boring, and named. Not "fix checkout." Try "restart worker group A in staging," "disable flag X for 5 percent of traffic," or "prepare rollback command for service Y without executing it." The smaller the verb, the less likely the bot becomes a weather event.</p>
+
+    <p>Give every action an authority envelope. The envelope should say who owns the service, what environments are allowed, what commands are permitted, what inputs are required, what rate limits apply, what checks must pass first, and what rollback happens if the action makes things worse. This is not ceremony. This is the difference between a tool and a raccoon with kubectl.</p>
+
+    <p>Require receipts. Every recommendation should link to the evidence it used: alert IDs, trace samples, deploy hashes, log queries, runbook versions, and prior incidents. Every action should record the requester, approver, command, parameters, time, observed preconditions, and observed result. A chat summary is not a receipt. It is a scented candle near the receipt.</p>
+
+    <p>Make uncertainty visible in the workflow, not just in the prose. The assistant should be able to say "insufficient evidence," "conflicting signals," "runbook may be stale," and "requires service owner." Those states should block or downgrade actions. Do not retry uncertainty until it becomes a confident verb. That is how you turn a confused assistant into a decisive outage multiplier.</p>
+
+    <p>Keep humans in the places where judgment matters. The copilot can assemble the timeline, propose candidate causes, draft the customer update, and stage the rollback command. A human should still own impact assessment, customer tradeoffs, irreversible actions, and cross-service coordination. If you want full automation, earn it the old boring way: constrain the action, prove it in drills, measure the blast radius, and write down exactly when the system must stop helping.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can the copilot explain which evidence supports each recommendation, or does it just sound calm?</li>
+      <li>Are read-only permissions separated from production actions with explicit scopes?</li>
+      <li>Does every action have an owner, approver, precondition, rate limit, and rollback path?</li>
+      <li>Can the system choose "do nothing yet" without treating that as a failed response?</li>
+      <li>Have you tested the assistant on stale runbooks, partial outages, noisy alerts, and fixes that help one service while hurting another?</li>
+    </ul>
+
+    <p>Incident copilots can make on-call work less miserable. Good. Let them fetch context, build timelines, and keep the channel from becoming a soup of panic nouns. Just do not confuse a fluent incident narrator with an incident commander. The narrator tells you where the smell is coming from. The commander decides whether to open a window or evacuate the building.</p>
+
+    <a class="back" href="../">Back to field notes</a>
+  </article>
+</body>
+</html>
