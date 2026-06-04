@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice agents and the smell of conversational glue - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on voice agents, phone trees, latency, authority boundaries, handoffs, transcripts, and why a pleasant voice is not an architecture." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · June 4, 2026</p>
+    <h1>Voice agents and the smell of conversational glue</h1>
+
+    <p>Voice agents are back, now with better latency, nicer voices, and fewer haunted pauses where the robot sounds like it has fallen down a well. This is useful. A voice interface can book an appointment, triage a support call, read back a policy, collect missing information, and let a human do something else for five minutes. That is not small.</p>
+
+    <p>The smell starts when the voice becomes a paste layer over broken systems. Instead of fixing account state, workflow ownership, escalation paths, and product rules, the team adds a polite synthetic employee who can apologize in eleven tones while wandering the same maze as the customer. It feels futuristic because the maze now says "mm-hmm."</p>
+
+    <blockquote>
+      <p>A voice agent is not an architecture. It is a mouth attached to one.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>Voice agents are useful when the task is bounded, the authority is explicit, and the handoff is clean.</li>
+        <li>They get smelly when conversation hides fragmented systems, vague policy, and missing ownership.</li>
+        <li>The hard parts are not speech synthesis. They are latency budgets, state, authorization, interruption, repair, and escalation.</li>
+        <li>If the agent can talk but cannot safely finish or gracefully stop, you built a charming phone tree with improv training.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The demo is always lovely. The caller speaks naturally. The agent understands intent, checks availability, confirms the time, and books the thing. No menus. No hold music. No "please listen carefully, as our options have recently changed," a phrase that should be sealed in concrete and dropped into the sea.</p>
+
+    <p>Then production arrives carrying a bucket. The caller changes their mind halfway through. The calendar API is slow. The account has two profiles. The policy says refunds are allowed except when they are not. The customer asks whether a fee can be waived because a human promised something last week. The agent sounds calm. The system underneath is sweating through its shirt.</p>
+
+    <p>This is conversational glue. The agent is used to smooth over missing product seams instead of exposing and fixing them. It collects data nobody trusts, summarizes a call nobody reviews, and hands a human a transcript that reads like a raccoon wearing a headset. Everyone says containment rate improved. Nobody checks whether the contained customers left satisfied, gave up, or shouted "representative" until a nearby dog learned the word.</p>
+
+    <p>The worst version is authority fog. The agent can say things, but nobody has written down which things count. Can it promise a credit? Can it cancel an order? Can it diagnose a billing error? Can it tell a patient, borrower, driver, applicant, or employee what happens next? If the answer is "the model should know from context," congratulations, the fart has entered the ventilation system.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Speech makes software feel more competent than it is. A text chatbot can be skimmed, doubted, copied, ignored. A voice agent occupies time. It interrupts, responds, hesitates, laughs lightly if someone tuned the personality knob too far, and creates the social pressure of a conversation. Humans are generous to voices. We fill gaps. We forgive ambiguity. We assume a confident speaker has a plan.</p>
+
+    <p>The architecture rarely earns that trust at first. Voice systems have a brutal chain of dependencies: speech recognition, turn detection, intent handling, retrieval, tool execution, policy checks, response generation, speech synthesis, logging, and human handoff. Each step adds latency and each step can misunderstand the previous one. Text can tolerate a few seconds. Voice cannot. Dead air smells like failure after about one inhale.</p>
+
+    <p>Turn-taking is its own little swamp. Users interrupt. They answer two questions at once. They mumble account numbers while the agent is still speaking. They ask side questions. They start angry and become more angry when the agent restarts the script. A normal API endpoint does not have to decide whether "no, Tuesday" means reject the previous offer, correct the date, or express despair at the state of civilization.</p>
+
+    <p>Companies also want voice agents to inherit authority from the human workflow without paying down the workflow debt. The human rep knows which policy is real, which screen lies, which manager can approve an exception, and which customer note means "do not touch this without calling legal." That knowledge often lives in habit, chat history, tribal warning, and one spreadsheet named Final_Final_Use_This_2.xlsx. The agent gets the glossy policy article and a tool token. Then everyone acts shocked when it becomes confidently incomplete.</p>
+
+    <p>Finally, voice creates lousy evidence unless you design for it. A transcript is not enough. You need the state before the call, the recognized utterance, the resolved intent, the policy branch, the tool arguments, the tool result, the agent's spoken promise, the caller's confirmation, and the handoff reason. Without that, you cannot debug whether the agent misheard the user, chose the wrong policy, called the wrong tool, or politely invented a bridge and walked the customer off it.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Start by refusing the big generic voice assistant. Pick narrow jobs with clean endings. Reschedule an appointment. Collect missing intake fields. Check order status. Route a call with context. Confirm a payment date. These are not glamorous, which is how you know they might survive contact with production.</p>
+
+    <p>Give each job an authority envelope. Write down what the agent may say, what it may do, what it must verify, and when it must stop. This should be boring enough to audit. "Can offer appointment slots returned by scheduling API" is useful. "Can help with bookings" is perfume. The envelope should include forbidden commitments, required disclaimers, identity checks, data retention rules, and the exact handoff conditions.</p>
+
+    <p>Design interruption and repair as first-class paths. Let users correct themselves. Let them ask "what did you hear?" Let them back out. Let them reach a person without solving a riddle. If the agent loses confidence, it should say so quickly and transfer with useful context. A graceful stop is a feature. A voice agent that never admits confusion is just a Roomba for consent.</p>
+
+    <p>Keep latency budgets visible. Separate the path that must respond immediately from the path that can think. The agent can acknowledge quickly while tools run, but it should not fill dead air with decorative sludge. "I'm checking the appointment calendar" is fine. A twenty-second monologue about valuing the customer's patience is how a support system develops a smell you can taste.</p>
+
+    <p>Build the call receipt before you scale the calls. Every completed task should leave a compact record: job type, identity status, policy version, tools called, commitments made, handoff state, and user-visible outcome. Sample calls for quality against the job, not against vibes. Review failures with the same seriousness you would give a bad database migration, because spoken promises can become production incidents wearing khakis.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can you name the exact job the voice agent is allowed to complete?</li>
+      <li>Can you point to the authority envelope for promises, actions, identity checks, and handoffs?</li>
+      <li>Does the agent have a tested path for interruptions, corrections, silence, anger, and low confidence?</li>
+      <li>Can a human review the call receipt and see what was heard, decided, done, and promised?</li>
+      <li>If the backend is confused, does the agent stop cleanly instead of becoming a friendly fog machine?</li>
+    </ul>
+
+    <p>Voice is a sharp interface because it feels human before it has earned human judgment. Give it a small job, a leash, and a receipt. Otherwise you have not automated support. You have taught the phone to fart in complete sentences.</p>
+
+    <a class="back" href="../">← Back to all field notes</a>
+  </article>
+</body>
+</html>
