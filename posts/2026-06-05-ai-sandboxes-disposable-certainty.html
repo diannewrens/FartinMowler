@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI sandboxes and the smell of disposable certainty - Fartin Mowler</title>
+  <meta name="description" content="A pattern essay on AI sandboxes, ephemeral environments, tool isolation, hidden state, preview confidence, and why disposable does not mean safe." />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    article.longform { max-width: 820px; padding: 4rem 1.25rem; margin: 0 auto; }
+    article.longform h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); }
+    article.longform p, article.longform li { color: var(--muted); font-size: 1.12rem; }
+    article.longform blockquote { border-left: 4px solid var(--toxic); margin: 2rem 0; padding-left: 1rem; color: var(--ink); font-size: 1.35rem; }
+    article.longform blockquote p { color: var(--ink); }
+    article.longform ul { margin: 1rem 0 2rem; }
+    article.longform li { margin: .5rem 0; }
+    .back { display: inline-block; margin-top: 2rem; color: var(--toxic); font-family: ui-sans-serif, system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../">Fartin Mowler</a>
+      <a href="../#posts">Posts</a>
+      <a href="../#about">About</a>
+    </nav>
+  </header>
+  <article class="longform">
+    <p class="eyebrow">Pattern essay · June 5, 2026</p>
+    <h1>AI sandboxes and the smell of disposable certainty</h1>
+
+    <p>AI coding agents love a sandbox. Give the agent a fresh checkout, a temporary filesystem, a browser preview, a package cache, maybe a little terminal with training wheels, and suddenly the whole thing feels civilized. The agent can make a mess somewhere nobody has to smell it until the diff comes home.</p>
+
+    <p>That is progress. A disposable environment is better than letting an eager robot rummage around a developer laptop full of SSH keys, stale branches, pet aliases, and one shell function named <code>deploy_real</code> that nobody should touch without a priest. Isolation matters.</p>
+
+    <p>The smell starts when the sandbox becomes proof. The agent says the app ran. The preview loaded. The tests passed in the clean little room. Everyone relaxes. Then production rejects the patch because the clean little room did not have the same secrets, feature flags, data shape, native dependencies, DNS behavior, queue backlog, auth provider, or deeply cursed build cache as the place where the software actually lives.</p>
+
+    <blockquote>
+      <p>A sandbox is a rehearsal room. It is not the building inspector.</p>
+    </blockquote>
+
+    <section aria-label="Short version">
+      <h2>Short version</h2>
+      <ul>
+        <li>AI sandboxes are useful because they limit blast radius and make agent work reviewable.</li>
+        <li>They get smelly when a disposable environment starts passing for production evidence.</li>
+        <li>The hard parts are parity, secrets, state, network policy, provenance, and cleanup.</li>
+        <li>If the sandbox cannot explain what it did and what it could not reproduce, it is a very tidy liar.</li>
+      </ul>
+    </section>
+
+    <h2>The smell</h2>
+
+    <p>The demo is clean. The agent opens a task, clones the repo, edits the code, runs the test suite, starts the dev server, captures a screenshot, and produces a pull request with the emotional range of a project manager who just discovered bullet points. The environment disappears afterward. No polluted laptop. No accidental credential leak. No twelve-minute argument about whose node version is haunted.</p>
+
+    <p>Then the false comfort creeps in. The sandbox passed, so the change must be safe. The preview rendered, so the UX must work. The agent tested the happy path, so the integration must be fine. This is disposable certainty: confidence manufactured by an environment designed to forget things.</p>
+
+    <p>You can smell it in the review comments. "Works in the agent sandbox." "Preview looks good." "All checks passed locally." These sentences are not useless, but they are not final evidence. They tell you the patch survived one small habitat. They do not tell you whether it can survive the swamp where customers, cron jobs, OAuth callbacks, old data, and angry caches gather to exchange spores.</p>
+
+    <p>The worst version hides behind ephemerality. Because the environment is temporary, nobody keeps enough receipts. The package install logs vanish. The agent's browser state vanishes. The exact command order vanishes. The network denies one request, retries another, and the trace goes wherever abandoned sandboxes go to die. The team gets a diff and a vibe. Very modern. Also slightly damp.</p>
+
+    <h2>Why it happens</h2>
+
+    <p>Sandboxes solve one real problem so neatly that they tempt teams to pretend they solved several adjacent problems too. They isolate tools. They constrain credentials. They make experiments cheap. They give reviewers a place to reproduce agent behavior without inviting the agent into the family silver drawer. All excellent.</p>
+
+    <p>But isolation cuts both ways. The safer the room, the less it resembles production. Real systems depend on awkward state: old migrations, weird tenants, expired tokens, regional settings, retained browser cookies, billing plans created before the current pricing model, and a feature flag spreadsheet that should have been a database in 2021. A sterile checkout cannot reveal problems caused by dirty history unless you deliberately bring some dirt.</p>
+
+    <p>Secrets are another trap. The sandbox usually gets fake credentials or narrowly scoped tokens, which is correct. Then the agent cannot exercise the real payment provider, email service, warehouse export, SSO flow, or deployment path. It stubs the edge and reports success near the edge. That is still useful if the report says "stubbed here." It is poisonous if the report says "verified" and everyone nods because the screenshot has a green button.</p>
+
+    <p>Network policy gets weird too. Some sandboxes cannot reach the private service. Some can reach too much. Some have package managers pointed at public registries but not internal mirrors. Some allow outbound calls during tests that production blocks. The agent experiences these as ordinary tool errors and may patch around them. Congratulations, your architecture now includes a model adapting to a fake network topology. The smell is faintly electrical.</p>
+
+    <p>Finally, cleanup is easy to confuse with accountability. Destroying the environment removes the mess, but it can also remove the evidence. If the sandbox is gone before the reviewer can see the commands, logs, file mutations, generated artifacts, and failed attempts, the review has to trust the agent's summary. Trusting a generated summary of a vanished environment is how adults accidentally reinvent folklore.</p>
+
+    <h2>The pattern</h2>
+
+    <p>Treat the sandbox as a bounded evidence generator. Its job is not to prove the system is correct. Its job is to produce a clear record of what was tried, what passed, what failed, what was mocked, and what could not be checked. That record should travel with the pull request like a slightly boring customs form.</p>
+
+    <p>Start with sandbox tiers. A scratch tier is for exploration and destructive experiments. A review tier runs the normal local suite, lints, build checks, and preview smoke tests. A parity tier is closer to production: seeded data, internal package mirrors, feature flags, policy-controlled network access, and enough secrets to test integrations without giving the agent a flamethrower.</p>
+
+    <p>Make gaps visible. If the payment API was mocked, say so. If the SSO callback could not run, say so. If the preview used seed data instead of tenant data, say so. A sandbox report should include negative evidence: "not tested against production-like billing plans" is more useful than a heroic paragraph about comprehensive validation. The latter smells like someone sprayed cologne on a failing smoke test.</p>
+
+    <p>Keep receipts after teardown. Preserve the command transcript, tool calls, environment image, dependency lockfile, test results, screenshots, browser console errors, and any generated files the agent chose not to commit. You do not need a forensic museum for every typo fix, but the reviewer should be able to answer a basic question: what happened in the room before the room was deleted?</p>
+
+    <p>Use capability-scoped credentials rather than all-or-nothing fake worlds. The agent should get tokens that can read a test tenant, write to a disposable namespace, call a staging endpoint, or trigger a dry-run deployment. The scope should be visible in the report. "Ran with staging.read_orders and test_email.send" is a lot better than "used credentials," which is the architectural equivalent of coughing into your sleeve.</p>
+
+    <p>Then connect sandbox results to release gates. A green sandbox can open a review. It should not automatically bless a risky merge unless the risky parts were actually exercised. If the change touches auth, billing, data migration, permissions, or customer-visible commitments, require the parity tier or a human-owned follow-up check. The sandbox can hold the flashlight. It should not sign the occupancy permit.</p>
+
+    <h2>The Fart Test</h2>
+
+    <ul>
+      <li>Can you name which sandbox tier produced the evidence for this change?</li>
+      <li>Does the report say what was mocked, skipped, blocked, or impossible to reproduce?</li>
+      <li>Are command logs, test results, screenshots, and tool calls preserved after teardown?</li>
+      <li>Do sandbox credentials have visible, narrow capabilities instead of magic access or useless fakes?</li>
+      <li>Would the same patch face stronger gates if it touched auth, billing, migrations, permissions, or production data?</li>
+    </ul>
+
+    <p>Disposable environments are good. Disposable evidence is not. Let the agent make a mess in a clean room, but keep the receipts, label the fake furniture, and do not confuse a tidy rehearsal with a certificate from the Ministry of Not Farting Up Production.</p>
+
+    <a class="back" href="../">← Back to all field notes</a>
+  </article>
+</body>
+</html>
